@@ -14,8 +14,22 @@
 				<img class="text-center d-flex mx-auto my-2" src="@selecitem.img" style="max-height: 400px; max-width: 400px"/>
 				<input type="text" class="spinput rounded flex-fill text-light p-2" @bind="@selecitem.name" placeholder="Item Name">
 				<input type="text" class="spinput rounded flex-fill text-light p-2" @bind="@selecitem.img" placeholder="Link">
+				<button class="mx-2 text-danger" @onclick="YouSure">Remove</button>
 			</div>
 		</div>
+		@if (yousure)
+		{
+			<div class="maiedal d-flex flex-column text-center justify-content-center">
+				<div class="p-2 darken-95 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-6">
+					<p> Are you sure you want to permanently remove item? </p>
+					<div class="d-flex flex-row flex-wrap mx-auto">
+						<button class="mx-2 text-light" @onclick="YouSure">No</button>
+						<button class="mx-2 text-danger" @onclick="Delete">Yes, remove it</button>
+					</div>
+				</div>
+			</div>
+
+		}
 	}
 	<div class="form-check">
 		<input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" @onchange="ToggleShowcase">
@@ -49,13 +63,13 @@
 									<ChildContent>
 										@if (minimal)
 										{
-											<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i])">
+											<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i], pair.Key)">
 												<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritemsmall flex-fill m-1" />
 											</a>
 										}
 										else
 										{
-											<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i])">
+											<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i], pair.Key)">
 												<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritem m-1" />
 											</a>
 										}
@@ -71,13 +85,13 @@
 							{
 								@if (minimal)
 								{
-									<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i])">
+									<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i], pair.Key)">
 										<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritemsmall flex-fill m-1" />
 									</a>
 								}
 								else
 								{
-									<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i])">
+									<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i], pair.Key)">
 										<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritem m-1" />
 									</a>
 								}
@@ -120,6 +134,7 @@
 	TierList selected { get; set; }
 
 	TierItem? selecitem;
+	string selectier = "";
 
 	TierLister tl;
 
@@ -147,9 +162,10 @@
 		minimal = !minimal;
 	}
 
-	void Select(TierItem l)
+	void Select(TierItem l, string key)
 	{
 		selecitem = l;
+		selectier = key;
 	}
 
 	void Exit()
@@ -181,10 +197,18 @@
 		tl.SaveAll();
 	}
 
-
-	void YouSure(TierList l)
+	void YouSure()
 	{
+		yousure = !yousure;
+	}
 
+	void Delete()
+	{
+		selected.list[selectier].Remove(selecitem);
+		selecitem = null;
+		selectier = "";
+		YouSure();
+		tl.SaveAll();
 	}
 
 	void StartDrag(MouseEventArgs e, int chara, string key) // Characacter Draggin'
@@ -192,7 +216,7 @@
 		Logger.LogInformation($"Started drag with {selected.list[key][chara].name} from tier {key}! {e.Button}");
 		if (e.Buttons == 2)
 		{
-			Select(selected.list[key][chara]);
+			Select(selected.list[key][chara], key);
 		}
 		else
 		{

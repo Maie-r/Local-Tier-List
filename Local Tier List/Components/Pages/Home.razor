@@ -36,7 +36,7 @@
 				<p> Are you sure you want to permanently remove this tierlist? </p>
 				<div class="d-flex flex-row flex-wrap mx-auto">
 					<button class="mx-2 text-light" @onclick="YouSure">No</button>
-					<button class="mx-2 text-danger" @onclick="Delete">Yes, remove them</button>
+					<button class="mx-2 text-danger" @onclick="Delete">Yes, remove it</button>
 				</div>
 			</div>
 		</div>
@@ -101,6 +101,6 @@
 
 	void Delete()
 	{
-		li.TierLists.RemoveAt(li.TierLists.IndexOf(selected2));
+		li.TierLists.Remove(selected2);
 	}
 }
