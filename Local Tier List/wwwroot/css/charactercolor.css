@@ -1,0 +1,284 @@
+:root {
+    --S: rgb(102, 3, 252);
+    --A: rgb(211, 28, 217);
+    --B: rgb(217, 43, 89);
+    --C: rgb(222, 102, 38);
+    --D: rgb(232, 223, 37);
+    --E: rgb(102, 214, 36);
+    --F: rgb(77, 77, 77);
+}
+
+/* Assign colors to characters based on a hash of their names */
+.text-pyro { color: var(--color-pyro); } /* Pyro */
+.text-hydro { color: var(--color-hydro); } /* Hydro */
+.text-anemo { color: var(--color-anemo); } /* Anemo */
+.text-electro { color: var(--color-electro); } /* Electro */
+.text-dendro { color: var(--color-dendro); } /* Dendro */
+.text-cryo { color: var(--color-cryo); } /* Cryo */
+.text-geo { color: var(--color-geo); } /* Geo */
+
+.text-better { color: #40cf68; }
+.text-worse { color: #bd1e13; }
+
+.bg-S { background-color: var(--S);}
+.bg-A { background-color: var(--A);}
+.bg-B { background-color: var(--B);}
+.bg-C { background-color: var(--C);}
+.bg-D { background-color: var(--D);}
+.bg-E { background-color: var(--E);}
+.bg-F { background-color: var(--F);}
+
+.tierborder-S {
+    border-top: solid;
+    border-bottom: solid;
+    border-color: var(--S)
+}
+
+.tierborder-A {
+    border-top: solid;
+    border-bottom: solid;
+    border-color: var(--A)
+}
+
+.tierborder-B {
+    border-top: solid;
+    border-bottom: solid;
+    border-color: var(--B)
+}
+
+.tierborder-C {
+    border-top: solid;
+    border-bottom: solid;
+    border-color: var(--C)
+}
+
+.tierborder-D {
+    border-top: solid;
+    border-bottom: solid;
+    border-color: var(--D)
+}
+
+.tierborder-E {
+    border-top: solid;
+    border-bottom: solid;
+    border-color: var(--E)
+}
+
+.tierborder-F {
+    border-top: solid;
+    border-bottom: solid;
+    border-color: var(--F)
+}
+
+.bg-highlight {  background-color: rgb(160, 80, 220); }
+.btn-unselect { background-color: rgba(160, 80, 220, 0.5); }
+.btn-selected {
+    background-color: rgb(160, 80, 220);
+    border: solid;
+    border-width: 0.1vw;
+    border-spacing: 0.5vw;
+    border-color: white;
+    transition: background-color 1s;
+}
+
+.half{
+    width: 10%!important;
+}
+
+.btn-anemo {
+    background-color: rgb(12, 166, 122);
+}
+
+.filter-purple {
+    background-color: rgba(107, 52, 235, 0.25);
+}
+
+.darken-25 {
+    background-color: rgba(0, 0, 0, 0.25);
+}
+
+.darken-50 {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.darken-75 {
+    background-color: rgba(0, 0, 0, 0.75);
+}
+
+.darken-95 {
+    background-color: rgba(0, 0, 0, 0.95);
+}
+
+.tieritem {
+    aspect-ratio: 1/1;
+    max-height: 100px;
+}
+
+.tieritemsmall {
+    aspect-ratio: 1/1;
+    max-height: 64px;
+}
+
+.remove-bg{
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.veryrounded {
+    border-radius: 3vw;
+}
+
+.clickable {
+    color: white;
+    cursor: pointer;
+    text-decoration: none;
+}
+.clickable-cursor {
+    cursor: pointer;
+}
+
+.clickable:hover img {
+    border: solid!important;
+    border-width: 0.25vw!important;
+    transition: border-width 0.25s;
+}
+
+.clickable:hover {
+    color: var(--color-highlight);
+    transition: color 0.25s;
+}
+
+.clickable:hover h4 {
+    color: white;
+    mix-blend-mode: overlay;
+    transition: mix-blend-mode 0.25s;
+}
+
+.draggable {
+    cursor: crosshair;
+}
+.draggable:hover h3 .team span {
+    color: var(--color-highlight)!important;
+    transition: color 0.25s;
+}
+
+    .draggable:hover h3 {
+        color: white;
+        mix-blend-mode: overlay;
+        transition: mix-blend-mode 0.25s;
+    }
+
+    .draggable:hover h4 {
+        color: white;
+        mix-blend-mode: overlay;
+        transition: mix-blend-mode 0.25s;
+    }
+
+    .draggable:hover h5 {
+        color: white;
+        mix-blend-mode: overlay;
+        transition: mix-blend-mode 0.25s;
+    }
+
+.bg-subtlegrad {
+    background-image: linear-gradient(190deg,#332470 10%, #10011f 100%);
+}
+
+.bordered 
+{
+    border:solid;
+    border-width: 0.5vw;
+    border-color: rgb(0, 0, 0);
+}
+
+.charimg {
+    max-width: 20vw;
+}
+
+.hidden 
+{
+    display: none!important;
+    transition: display 0.5s;
+}
+.shown {
+    transition: display 0.5s;
+}
+
+.divideer {
+    max-height: 1vw;
+    border-top: 1vw solid rgba(0, 0, 0, 0.5);
+    border-radius: 1vw;
+}
+
+.spinput {
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.25);
+    border: solid;
+    border-width: 1px;
+}
+
+.tierput {
+    text-align: center;
+    background-color: transparent;
+    border: none;
+    aspect-ratio: 1/1;
+    max-height: 100px;
+}
+
+.float {
+    float:left;
+}
+
+.templatecard {
+    min-width: 15vw;
+    min-height: 22vh!important;
+    border:dashed;
+    border-color: rgba(255, 255, 255, 0.75);
+}
+
+.template {
+    border: dashed;
+    border-color: rgba(255, 255, 255, 0.75);
+}
+
+.maiedal {
+    position: fixed;
+    z-index: 1;
+    margin: 5% 5% 5% 5%;
+    left: 0;
+    top: 0;
+    width: 90%;
+    height: 90%;
+    overflow: auto;
+}
+
+.floater {
+    position: absolute;
+    z-index: 1;
+    left: 30%;
+    top: 50%;
+    width: 10%;
+    height: 100%;
+    overflow: auto;
+}
+
+@media (max-width: 991px) {
+    .floater {
+        position: absolute;
+        z-index: 1;
+        left: 30%;
+        top: 85%;
+        width: 60%;
+        height: 100%;
+        overflow: auto;
+    }
+}
+
+.hole {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 0.5vw;
+}
+
+.border-anemo{
+    border: solid;
+    border-color: var(--color-anemo);
+}

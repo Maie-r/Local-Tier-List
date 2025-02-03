@@ -1,0 +1,106 @@
+﻿@page "/"
+<link href="css/charactercolor.css" rel="stylesheet" />
+
+<div class="m-4 p-4">
+	<h1>Tier Lists!</h1>
+	<div class="row col-md-12 col-lg-8 d-flex flex-column text-light m-2">
+		<h5> Tier Lists: </h5>
+		@if (lists.Count <= 0)
+		{
+			<div class="col-sm-12 col-lg-4 mx-2 flex-column justify-content-center d-flex flex-fill">
+				<h5> There are none. </h5>
+			</div>
+		}
+		<div class="row mx-1 flex-row justify-content-center col-12 flex-fill flex-wrap d-flex">
+			@for (int local = 0; local < lists.Count; local++)
+			{
+				int i = local;
+				<div class="row col-12 mx-0 my-1 d-flex flex-fill flex-wrap">
+					<div class="row p-0 col-12 d-flex flex-fill">
+						<div class="d-flex col-6 p-0 flex-nowrap flex-row">
+							<a class="bg-highlight text-light p-2 rounded clickable" @onclick="() => Select(lists[i])">@lists[i].name</a>
+							<button class="text-light p-2 ms-1 bg-danger clickable rounded flex-nowrap" @onclick="() => YouSure(lists[i])">✖</button>
+						</div>
+					</div>
+				</div>
+			}
+			<div class="row col-6 mx-0 my-1 d-flex p-0 flex-wrap">
+				<h5 class="clickable p-0 m-0 rounded template" @onclick="Add"> New Tierlist </h5>
+			</div>
+		</div>
+	</div>
+	@if (yousure)
+	{
+		<div class="maiedal d-flex flex-column text-center justify-content-center">
+			<div class="p-2 darken-95 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-6">
+				<p> Are you sure you want to permanently remove this tierlist? </p>
+				<div class="d-flex flex-row flex-wrap mx-auto">
+					<button class="mx-2 text-light" @onclick="YouSure">No</button>
+					<button class="mx-2 text-danger" @onclick="Delete">Yes, remove them</button>
+				</div>
+			</div>
+		</div>
+
+	}
+	@if (selected != null)
+	{
+		<CascadingValue Value="selected">
+			<TierListComp/>
+		</CascadingValue>
+	}
+</div>
+
+
+@code
+{
+	TierLister li;
+	List<TierList>? lists;
+	TierList? selected;
+
+	TierList? selected2;
+
+	bool yousure = false;
+
+	protected override async Task OnInitializedAsync()
+	{
+		li = await itier.Start();
+		lists = li.TierLists;
+	}
+
+	void Select(TierList l)
+	{
+		selected = l;
+	}
+
+	void Add()
+	{
+		li.TierLists.Add(new TierList($"Tierlist {li.TierLists.Count+1}"));
+	}
+
+	void YouSure(TierList l)
+	{
+		if (yousure)
+		{
+			yousure = false;
+			selected2 = null;
+		}
+		else
+		{
+			yousure = true;
+			selected2 = l;
+		}
+	}
+	void YouSure()
+	{
+		if (yousure)
+		{
+			yousure = false;
+			selected2 = null;
+		}
+	}
+
+	void Delete()
+	{
+		li.TierLists.RemoveAt(li.TierLists.IndexOf(selected2));
+	}
+}

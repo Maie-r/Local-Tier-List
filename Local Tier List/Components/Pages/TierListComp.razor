@@ -1,0 +1,272 @@
+﻿@page "/tier"
+@using Microsoft.Extensions.Logging
+@inject ILogger<TierListComp> Logger
+<link href="css/charactercolor.css" rel="stylesheet" />
+
+<div>
+	@if (selecitem != null)
+	{
+		<div class="maiedal">
+			<div class="d-flex col-8 rounded darken-95 flex-column mx-auto my-auto">
+				<div class="d-flex p-4 text-end justify-content-end">
+					<a class="clickable" @onclick="Exit">✖</a>
+				</div>
+				<img class="text-center d-flex mx-auto my-2" src="@selecitem.img" style="max-height: 400px; max-width: 400px"/>
+				<input type="text" class="spinput rounded flex-fill text-light p-2" @bind="@selecitem.name" placeholder="Item Name">
+				<input type="text" class="spinput rounded flex-fill text-light p-2" @bind="@selecitem.img" placeholder="Link">
+			</div>
+		</div>
+	}
+	<div class="form-check">
+		<input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" @onchange="ToggleShowcase">
+		<label class="form-check-label" for="flexCheckDefault">
+			Showcase Mode
+		</label>
+	</div>
+	<div class="form-check">
+		<input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" @onchange="ToggleMinimal">
+		<label class="form-check-label" for="flexCheckDefault">
+			Minimal Mode
+		</label>
+	</div>
+	<div class="row col-12 d-flex darken-50 flex-column text-light m-2">
+		<input type="text" class="spinput rounded col-4 flex-fill text-light p-2" @bind="@selected.name" placeholder="Tierlist Name">
+		@foreach (var pair in selected.list)
+		{
+			Logger.LogInformation(pair.Key);
+			<div class="p-0 m-0 d-flex darken-25 col-12 flex-row">
+				<div class="d-flex flex-column py-auto text-center justify-content-center col-1 py-auto me-1 bg-@pair.Key">
+					<input type="text" value="@pair.Key" class="tierput rounded fs-2 flex-fill col-12 text-wrap text-light" @onchange="(e) => ChangeTierName(e.Value?.ToString(), pair.Key)" placeholder="Tier Title">
+				</div>
+				<a class="d-flex flex-fill col-12 text-light" @ondragover="() => OverTier(pair.Key)" @ondragleave="OuttaTier">
+					<div class="d-flex text-start flex-wrap col-12 tierborder-@pair.Key">
+						@for (int local = 0; local < pair.Value.Count; local++)
+						{
+							int i = local;
+							@if (showcase)
+							{
+								<MudTooltip class="col-2" Color="Color.Transparent">
+									<ChildContent>
+										@if (minimal)
+										{
+											<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i])">
+												<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritemsmall flex-fill m-1" />
+											</a>
+										}
+										else
+										{
+											<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i])">
+												<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritem m-1" />
+											</a>
+										}
+									</ChildContent>
+									<TooltipContent>
+										<div class="text-light darken-95 rounded p-3 m-0">
+											@pair.Value[i].name
+										</div>
+									</TooltipContent>
+								</MudTooltip>
+							}
+							else
+							{
+								@if (minimal)
+								{
+									<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i])">
+										<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritemsmall flex-fill m-1" />
+									</a>
+								}
+								else
+								{
+									<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i])">
+										<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritem m-1" />
+									</a>
+								}
+							}
+
+						}
+						@if (!showcase)
+						{
+							if (minimal)
+							{
+								<h5 class="clickable p-0 m-0 justify-content-center rounded m-1 d-flex template tieritemsmall" @onclick="() => Add(pair.Key)"> New Item </h5>
+							}
+							else
+							{
+								<h5 class="clickable p-0 m-0 justify-content-center py-auto rounded my-auto d-flex template tieritem" @onclick="() => Add(pair.Key)"> New Item </h5>
+							}
+						}
+					</div>
+				</a>
+			</div>
+		}
+		<div class="d-flex darken-25 col-12 flex-row m-0 p-0">
+			@if (!showcase)
+			{
+				<a class="clickable col-12 p-0 m-0" @onclick="NewTier">
+					<div class="d-block py-auto p-0 m-0 text-center template col-1 me-1 py-auto bg-darken-25">
+						<h2>New Tier</h2>
+					</div>
+				</a>
+				<div class="d-flex col-11"></div>
+			}
+		</div>
+	</div>
+</div>
+
+
+@code
+{
+	[CascadingParameter]
+	TierList selected { get; set; }
+
+	TierItem? selecitem;
+
+	TierLister tl;
+
+	bool yousure;
+	bool showcase = false;
+	bool minimal = false;
+
+	string dragtier = ""; // which tier mouse is over
+	int dragover; // which item mouse is over
+	string draggedtier = ""; // which tier dragged item was from
+	int dragitem; // index of dragged item
+
+	protected override async Task OnInitializedAsync()
+	{
+		tl = await itier.Start();
+	}
+
+	void ToggleShowcase()
+	{
+		showcase = !showcase;
+	}
+
+	void ToggleMinimal()
+	{
+		minimal = !minimal;
+	}
+
+	void Select(TierItem l)
+	{
+		selecitem = l;
+	}
+
+	void Exit()
+	{
+		selecitem = null;
+		tl.SaveAll();
+	}
+
+	void Add(string key)
+	{
+		TierItem temp = new TierItem("NEW ITEM, https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQWp41SPuTxCXvopcXoaGCvnygZ193Kot0Zuw&s");
+		selected.list[key].Add(temp);
+		selecitem = temp;
+		tl.SaveAll();
+	}
+
+	void NewTier()
+	{
+		selected.list.Add("New Tier", new List<TierItem>());
+		tl.SaveAll();
+	}
+
+	void ChangeTierName(string neww, string old)
+	{
+		List<TierItem> temp = selected.list[old];
+		selected.list.Remove(old);
+		selected.list.Add(neww, temp);
+		temp = null;
+		tl.SaveAll();
+	}
+
+
+	void YouSure(TierList l)
+	{
+
+	}
+
+	void StartDrag(MouseEventArgs e, int chara, string key) // Characacter Draggin'
+	{
+		Logger.LogInformation($"Started drag with {selected.list[key][chara].name} from tier {key}! {e.Button}");
+		if (e.Buttons == 2)
+		{
+			Select(selected.list[key][chara]);
+		}
+		else
+		{
+			draggedtier = key;
+			dragitem = chara;
+		}
+	}
+
+	void StopDrag(MouseEventArgs e)
+	{
+		if (dragover >= 0)
+		{
+			Logger.LogInformation($"{dragover} {dragitem}");
+			if (draggedtier != "" && dragtier != "")
+			{
+				try
+				{
+					if (selected.list[dragtier][dragover] != selected.list[draggedtier][dragitem])
+					{
+						Logger.LogInformation($"Switcheroo!");
+						TierItem temp = selected.list[draggedtier][dragitem];
+						selected.list[draggedtier].RemoveAt(dragitem);
+						selected.list[dragtier].Insert(dragover, temp);
+						temp = null;
+						tl.SaveAll();
+					}
+				}
+				catch
+				{
+					Logger.LogInformation($"Switcheroo!");
+					TierItem temp = selected.list[draggedtier][dragitem];
+					selected.list[draggedtier].RemoveAt(dragitem);
+					selected.list[dragtier].Add(temp);
+					temp = null;
+				}
+				dragover = -1;
+				dragitem = -1;
+			}
+		}
+		else
+		{
+			Logger.LogInformation($"Stopped drag!");
+			dragitem = -1;
+		}
+		StateHasChanged();
+
+	}
+
+	void OverTier(string tier)
+	{
+		Logger.LogInformation($"Mouse over {tier} tier!");
+		dragtier = tier;
+		StateHasChanged();
+	}
+
+	void OuttaTier(MouseEventArgs e)
+	{
+		Logger.LogInformation($"Mouse out (tier)!");
+		dragtier = "";
+		StateHasChanged();
+	}
+
+	void OverHere(int pos)
+	{
+		Logger.LogInformation($"Mouse over some item!");
+		dragover = pos;
+		StateHasChanged();
+	}
+
+	void OuttaHere(MouseEventArgs e)
+	{
+		Logger.LogInformation($"Mouse out (item)!");
+		dragover = -1;
+		StateHasChanged();
+	}
+	// End Characacter Draggin'
+}

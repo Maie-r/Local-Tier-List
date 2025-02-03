@@ -1,0 +1,21 @@
+﻿@inherits LayoutComponentBase
+@using MudBlazor
+
+<link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+<div class="page">
+    @*<div class="sidebar">
+        <NavMenu />
+    </div>*@
+    <main class="d-flex m-0 bg-subtlegrad p-0 bg-dark">
+        <div class="col-12 justify-content-center m-0 bg-subtlegrad p-0 bg-dark">
+            @Body
+        </div>
+    </main>
+</div>
+
+@* Required *@
+<MudThemeProvider IsDarkMode="true" />
+<MudPopoverProvider />
+
+<script src="DragDropPolyfil.js"></script>
+<script src="_content/MudBlazor/MudBlazor.min.js"></script>
