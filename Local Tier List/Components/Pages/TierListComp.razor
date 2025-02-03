@@ -64,13 +64,13 @@
 										@if (minimal)
 										{
 											<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i], pair.Key)">
-												<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritemsmall flex-fill m-1" />
+												<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritemsmall rounded flex-fill m-1" />
 											</a>
 										}
 										else
 										{
 											<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i], pair.Key)">
-												<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritem m-1" />
+												<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritem rounded m-1" />
 											</a>
 										}
 									</ChildContent>
@@ -86,13 +86,13 @@
 								@if (minimal)
 								{
 									<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i], pair.Key)">
-										<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritemsmall flex-fill m-1" />
+										<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritemsmall rounded flex-fill m-1" />
 									</a>
 								}
 								else
 								{
 									<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i], pair.Key)">
-										<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritem m-1" />
+										<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritem rounded m-1" />
 									</a>
 								}
 							}
