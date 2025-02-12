@@ -32,19 +32,22 @@
 		}
 	}
 	<div class="form-check">
-		<input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" @onchange="ToggleShowcase">
+		<input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" @onchange="() => Toggle(ref showcase)">
 		<label class="form-check-label" for="flexCheckDefault">
 			Showcase Mode
 		</label>
 	</div>
 	<div class="form-check">
-		<input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" @onchange="ToggleMinimal">
+		<input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" @onchange="() => Toggle(ref minimal)">
 		<label class="form-check-label" for="flexCheckDefault">
 			Minimal Mode
 		</label>
 	</div>
 	<div class="row col-12 d-flex darken-50 flex-column text-light m-2">
-		<input type="text" class="spinput rounded col-4 flex-fill text-light p-2" @bind="@selected.name" placeholder="Tierlist Name">
+		<div class="d-flex flex-wrap flex-fill flex-row">
+			<input type="text" class="spinput rounded col-4 flex-fill mx-2 text-light p-2" @bind="@selected.name" placeholder="Tierlist Name">
+			<MudTextField @bind-Value="filter" Placeholder="Search" Immediate="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0 mx-2 text-light"></MudTextField>
+		</div>
 		@foreach (var pair in selected.list)
 		{
 			Logger.LogInformation(pair.Key);
@@ -57,45 +60,49 @@
 						@for (int local = 0; local < pair.Value.Count; local++)
 						{
 							int i = local;
-							@if (showcase)
+							@if (InFilter(pair.Value[i].name))
 							{
-								<MudTooltip class="col-2" Color="Color.Transparent">
-									<ChildContent>
-										@if (minimal)
-										{
-											<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i], pair.Key)">
-												<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritemsmall rounded flex-fill m-1" />
-											</a>
-										}
-										else
-										{
-											<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i], pair.Key)">
-												<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritem rounded m-1" />
-											</a>
-										}
-									</ChildContent>
-									<TooltipContent>
-										<div class="text-light darken-95 rounded p-3 m-0">
-											@pair.Value[i].name
-										</div>
-									</TooltipContent>
-								</MudTooltip>
-							}
-							else
-							{
-								@if (minimal)
+								@if (showcase)
 								{
-									<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i], pair.Key)">
-										<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritemsmall rounded flex-fill m-1" />
-									</a>
+									<MudTooltip class="col-2" Color="Color.Transparent">
+										<ChildContent>
+											@if (minimal)
+											{
+												<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i], pair.Key)">
+													<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritemsmall rounded flex-fill m-1" />
+												</a>
+											}
+											else
+											{
+												<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i], pair.Key)">
+													<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritem rounded m-1" />
+												</a>
+											}
+										</ChildContent>
+										<TooltipContent>
+											<div class="text-light darken-95 rounded p-3 m-0">
+												@pair.Value[i].name
+											</div>
+										</TooltipContent>
+									</MudTooltip>
 								}
 								else
 								{
-									<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i], pair.Key)">
-										<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritem rounded m-1" />
-									</a>
+									@if (minimal)
+									{
+										<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i], pair.Key)">
+											<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritemsmall rounded flex-fill m-1" />
+										</a>
+									}
+									else
+									{
+										<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i], pair.Key)">
+											<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritem rounded m-1" />
+										</a>
+									}
 								}
 							}
+
 
 						}
 						@if (!showcase)
@@ -141,6 +148,7 @@
 	bool yousure;
 	bool showcase = false;
 	bool minimal = false;
+	string filter = "";
 
 	string dragtier = ""; // which tier mouse is over
 	int dragover; // which item mouse is over
@@ -152,14 +160,26 @@
 		tl = await itier.Start();
 	}
 
-	void ToggleShowcase()
+	void Toggle(ref bool thing)
 	{
-		showcase = !showcase;
+		thing = !thing;
 	}
 
-	void ToggleMinimal()
+	bool InFilter(string name)
 	{
-		minimal = !minimal;
+		if (filter == "")
+		{
+			return true;
+		}
+		string[] filters = filter.Split("+");
+		foreach (string f in filters)
+		{
+			if (name.Contains(f, StringComparison.OrdinalIgnoreCase))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	void Select(TierItem l, string key)
