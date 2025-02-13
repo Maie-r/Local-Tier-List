@@ -2,8 +2,8 @@
 <link href="css/charactercolor.css" rel="stylesheet" />
 
 <div class="m-4 p-4">
-	<h1>Tier Lists!</h1>
-	<div class="row col-md-12 col-lg-8 d-flex flex-column text-light m-2">
+	<h1 class="text-light">Local Tier List Maker</h1>
+	<div class="row col-12 d-flex flex-column text-light m-2">
 		<h5> Tier Lists: </h5>
 		@if (lists.Count <= 0)
 		{
@@ -15,17 +15,21 @@
 			@for (int local = 0; local < lists.Count; local++)
 			{
 				int i = local;
-				<div class="row col-12 mx-0 my-1 d-flex flex-fill flex-wrap">
+				<div class="row col-sm-4 col-md-3 col-lg-2 mx-0 my-1 d-flex flex-fill flex-wrap">
 					<div class="row p-0 col-12 d-flex flex-fill">
-						<div class="d-flex col-6 p-0 flex-nowrap flex-row">
-							<a class="bg-highlight text-light p-2 rounded clickable" @onclick="() => Select(lists[i])">@lists[i].name</a>
-							<button class="text-light p-2 ms-1 bg-danger clickable rounded flex-nowrap" @onclick="() => YouSure(lists[i])">✖</button>
+						<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
+							<a class="bg-highlight col-10 text-light text-center p-2 rounded clickable" @onclick="() => Select(lists[i])">@lists[i].name</a>
+							<button class="text-light col-2 p-2 ms-1 bg-danger clickable rounded flex-nowrap" @onclick="() => YouSure(lists[i])">✖</button>
 						</div>
 					</div>
 				</div>
 			}
-			<div class="row col-6 mx-0 my-1 d-flex p-0 flex-wrap">
-				<h5 class="clickable p-0 m-0 rounded template" @onclick="Add"> New Tierlist </h5>
+			<div class="row col-sm-4 col-md-3 col-lg-2 mx-0 my-1 d-flex flex-fill flex-wrap">
+				<div class="row p-0 col-12 d-flex flex-fill">
+					<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
+						<h5 class="clickable flex-fill p-0 m-0 text-center rounded template" @onclick="Add"> New Tierlist </h5>
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -69,7 +73,14 @@
 
 	void Select(TierList l)
 	{
-		selected = l;
+		if (l == selected)
+		{
+			selected = null;
+		}
+		else
+		{
+			selected = l;
+		}
 	}
 
 	void Add()
@@ -102,5 +113,6 @@
 	void Delete()
 	{
 		li.TierLists.Remove(selected2);
+		yousure = false;
 	}
 }

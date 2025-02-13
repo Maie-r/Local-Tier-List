@@ -27,6 +27,7 @@
 .bg-D { background-color: var(--D);}
 .bg-E { background-color: var(--E);}
 .bg-F { background-color: var(--F);}
+.bg-Forgor { background-color: var(--F);}
 
 .tierborder-S {
     border-top: solid;

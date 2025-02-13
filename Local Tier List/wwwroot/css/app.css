@@ -1,6 +1,9 @@
 ﻿html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    min-height: 1080px!important;
+}
+
+main {
+    min-height: 800px !important;
 }
 
 a, .btn-link {
