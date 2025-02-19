@@ -51,9 +51,9 @@
 		@foreach (var pair in selected.list)
 		{
 			Logger.LogInformation(pair.Key);
-			<div class="p-0 m-0 d-flex darken-25 col-12 flex-row">
-				<div class="d-flex flex-column py-auto text-center justify-content-center col-1 py-auto me-1 bg-@pair.Key">
-					<input type="text" value="@pair.Key" class="tierput rounded fs-2 flex-fill col-12 text-wrap text-light" @onchange="(e) => ChangeTierName(e.Value?.ToString(), pair.Key)" placeholder="Tier Title">
+			<div class="p-0 m-0 d-flex darken-25 flex-column flex-sm-row col-12">
+				<div class="d-flex flex-column text-center justify-content-center col-sm-1 py-1 py-sm-1 py-md-auto me-1 bg-@pair.Key">
+					<input type="text" value="@pair.Key" class="tierput rounded fs-2 py-md-auto py-1 m-0 flex-fill col-12 text-wrap text-light" @onchange="(e) => ChangeTierName(e.Value?.ToString(), pair.Key)" placeholder="Tier Title">
 				</div>
 				<a class="d-flex flex-fill col-12 text-light" @ondragover="() => OverTier(pair.Key)" @ondragleave="OuttaTier">
 					<div class="d-flex text-start flex-wrap col-12 tierborder-@pair.Key">
@@ -124,7 +124,7 @@
 			@if (!showcase)
 			{
 				<a class="clickable col-12 p-0 m-0" @onclick="NewTier">
-					<div class="d-block py-auto p-0 m-0 text-center template col-1 me-1 py-auto bg-darken-25">
+					<div class="d-block tieritem py-auto p-0 m-0 text-center template col-1 me-1 py-auto bg-darken-25">
 						<h2>New Tier</h2>
 					</div>
 				</a>
