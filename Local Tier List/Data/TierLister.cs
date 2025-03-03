@@ -32,19 +32,20 @@ namespace Local_Tier_List.Data
                 for (int i = 1; i < sep1.Length; i++) // every tier
                 {
                     string[] sep2 = sep1[i].Split("\r\n");
+                    Tier temp2 = new Tier(sep2[0].Split(','));
+                    try
+                    {
+                        temp.list.Add(temp2.name, temp2);
+                    }
+                    catch
+                    {
+                        temp.list.Add(temp2.name + "(1)", temp2);
+                    }
                     Debug.WriteLine(sep2.Length);
                     for (int j = 1; j < sep2.Length; j++) // every item
                     {
                         if (sep2[j] == "") { break; }
-                        if (!temp.list.ContainsKey(sep2[0]))
-                        {
-                            temp.list.Add(sep2[0], new List<TierItem>());
-                        }
-                        temp.list[sep2[0]].Add(new TierItem(sep2[j]));
-                    }
-                    if (!temp.list.ContainsKey(sep2[0]))
-                    {
-                        temp.list.Add(sep2[0], new List<TierItem>());
+                        temp.list[temp2.name].items.Add(new TierItem(sep2[j]));
                     }
 
                 }
@@ -62,10 +63,10 @@ namespace Local_Tier_List.Data
                 i++;
                 int j = 0;
                 result += list.name;
-                foreach (var kv in list.list)
+                foreach (Tier tier in list.list.Values)
                 {
-                    result += "/-/" + kv.Key + "\r\n";
-                    foreach (var item in kv.Value)
+                    result += $"/-/{tier.name},{tier.color}\r\n";
+                    foreach (var item in tier.items)
                     {
                         Debug.WriteLine($"{item.name}, {item.img}");
                         result += $"{item.name}, {item.img}" + "\r\n";
@@ -88,13 +89,42 @@ namespace Local_Tier_List.Data
 
     public class TierList
     {
-        public Dictionary<string, List<TierItem>> list;
+        public Dictionary<string, Tier> list;
         public string name;
 
         public TierList(string name)
         {
             this.name = name;
-            list = new Dictionary<string, List<TierItem>>();
+            list = new Dictionary<string, Tier>();
+        }
+    }
+
+    public class Tier
+    {
+        public string name;
+        public string ogname;
+        public string color;
+        public List<TierItem> items;
+        public Tier(string name, string color)
+        {
+            this.name = name;
+            this.ogname = name;
+            this.color = color;
+            items = new List<TierItem>();
+        }
+
+        public Tier(string[] data)
+        {
+            Debug.WriteLine(data[0]);
+            this.name = data[0];
+            this.ogname = data[0];
+            this.color = data[1];
+            items = new List<TierItem>();
+        }
+
+        public void Add(TierItem item)
+        {
+            items.Add(item);
         }
     }
 

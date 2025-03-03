@@ -21,14 +21,40 @@
 		{
 			<div class="maiedal d-flex flex-column text-center justify-content-center">
 				<div class="p-2 darken-95 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-6">
-					<p> Are you sure you want to permanently remove item? </p>
+					<p> Are you sure you want to permanently remove this item? </p>
 					<div class="d-flex flex-row flex-wrap mx-auto">
 						<button class="mx-2 text-light" @onclick="YouSure">No</button>
 						<button class="mx-2 text-danger" @onclick="Delete">Yes, remove it</button>
 					</div>
 				</div>
 			</div>
-
+		}
+	}
+	@if (selectier != null)
+	{
+		<div class="maiedal">
+			<div class="p-2 d-flex col-8 rounded darken-95 flex-column mx-auto my-auto">
+				<div class="d-flex p-4 text-end justify-content-end">
+					<a class="clickable" @onclick="Exit">✖</a>
+				</div>
+				<div class="d-flex flex-column text-center justify-content-center mx-auto col-sm-1 py-1 py-sm-1 py-md-auto">
+					<input type="text" value="@selectier.name" class="rounded fs-2 py-md-auto py-1 m-0 flex-fill col-12 text-wrap text-light" @onchange="(e) => ChangeTierName(e.Value?.ToString(), selectier.ogname)" placeholder="Tier Title" style="background-color: @selectier.color">
+				</div>
+				<MudColorPicker Label="Tier Color" @bind-Text="selectier.color" Style="@($"color: {selectier.color};")" Placeholder="Select Color" />
+				<button class="mx-2 text-danger" @onclick="YouSure">Remove</button>
+			</div>
+		</div>
+		@if (yousure)
+		{
+			<div class="maiedal d-flex flex-column text-center justify-content-center">
+				<div class="p-2 darken-95 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-6">
+					<h5> Are you sure you want to permanently remove this tier? All items will be deleted with it!</h5>
+					<div class="d-flex flex-row flex-wrap mx-auto">
+						<button class="mx-2 text-light" @onclick="YouSure">No</button>
+						<button class="mx-2 text-danger" @onclick="DeleteTier">Yes, remove it and all items within</button>
+					</div>
+				</div>
+			</div>
 		}
 	}
 	<div class="form-check">
@@ -50,17 +76,16 @@
 		</div>
 		@foreach (var pair in selected.list)
 		{
-			Logger.LogInformation(pair.Key);
 			<div class="p-0 m-0 d-flex darken-25 flex-column flex-sm-row col-12">
-				<div class="d-flex flex-column text-center justify-content-center col-sm-1 py-1 py-sm-1 py-md-auto me-1 bg-@pair.Key">
-					<input type="text" value="@pair.Key" class="tierput rounded fs-2 py-md-auto py-1 m-0 flex-fill col-12 text-wrap text-light" @onchange="(e) => ChangeTierName(e.Value?.ToString(), pair.Key)" placeholder="Tier Title">
-				</div>
+				<a class="d-flex clickable flex-column text-center justify-content-center col-sm-1 py-1 py-sm-1 py-md-auto me-1" @onmousedown="(e) => SelectTier(e, pair.Key)" style="background-color: @pair.Value.color">
+					<input type="text" value="@pair.Value.name" class="tierput rounded fs-2 py-md-auto py-1 m-0 flex-fill col-12 text-wrap text-light" @onchange="(e) => ChangeTierName(e.Value?.ToString(), pair.Key)" placeholder="Tier Title">
+				</a>
 				<a class="d-flex flex-fill col-12 text-light" @ondragover="() => OverTier(pair.Key)" @ondragleave="OuttaTier">
-					<div class="d-flex text-start flex-wrap col-12 tierborder-@pair.Key">
-						@for (int local = 0; local < pair.Value.Count; local++)
+					<div class="d-flex text-start flex-wrap col-12" style="border-top: solid; border-bottom: solid; border-color: @pair.Value.color">
+						@for (int local = 0; local < pair.Value.items.Count; local++)
 						{
 							int i = local;
-							@if (InFilter(pair.Value[i].name))
+							@if (InFilter(pair.Value.items[i].name))
 							{
 								@if (showcase)
 								{
@@ -68,20 +93,20 @@
 										<ChildContent>
 											@if (minimal)
 											{
-												<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i], pair.Key)">
-													<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritemsmall rounded flex-fill m-1" />
+												<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onpointerup="() => Select(pair.Value.items[i], pair.Key)" @onclick="() => Select(pair.Value.items[i], pair.Key)">
+													<img src="@pair.Value.items[i].img" draggable="false" alt="@pair.Value.items[i].name" class="tieritemsmall rounded flex-fill m-1" />
 												</a>
 											}
 											else
 											{
-												<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i], pair.Key)">
-													<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritem rounded m-1" />
+												<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onpointerup="() => Select(pair.Value.items[i], pair.Key)" @onclick="() => Select(pair.Value.items[i], pair.Key)">
+													<img src="@pair.Value.items[i].img" draggable="false" alt="@pair.Value.items[i].name" class="tieritem rounded m-1" />
 												</a>
 											}
 										</ChildContent>
 										<TooltipContent>
 											<div class="text-light darken-95 rounded p-3 m-0">
-												@pair.Value[i].name
+												@pair.Value.items[i].name
 											</div>
 										</TooltipContent>
 									</MudTooltip>
@@ -90,20 +115,18 @@
 								{
 									@if (minimal)
 									{
-										<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i], pair.Key)">
-											<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritemsmall rounded flex-fill m-1" />
+										<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value.items[i], pair.Key)">
+											<img src="@pair.Value.items[i].img" draggable="false" alt="@pair.Value.items[i].name" class="tieritemsmall rounded flex-fill m-1" />
 										</a>
 									}
 									else
 									{
-										<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value[i], pair.Key)">
-											<img src="@pair.Value[i].img" draggable="false" alt="@pair.Value[i].name" class="tieritem rounded m-1" />
+										<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value.items[i], pair.Key)">
+											<img src="@pair.Value.items[i].img" draggable="false" alt="@pair.Value.items[i].name" class="tieritem rounded m-1" />
 										</a>
 									}
 								}
 							}
-
-
 						}
 						@if (!showcase)
 						{
@@ -140,8 +163,10 @@
 	[CascadingParameter]
 	TierList selected { get; set; }
 
+	Tier? selectier;
+
 	TierItem? selecitem;
-	string selectier = "";
+	string selecitemtier = "";
 
 	TierLister tl;
 
@@ -185,12 +210,28 @@
 	void Select(TierItem l, string key)
 	{
 		selecitem = l;
-		selectier = key;
+		selecitemtier = key;
+		selectier = null;
+	}
+
+	void SelectTier(MouseEventArgs e, string tier)
+	{
+		Logger.LogInformation("Clicked tier " + tier);
+		Logger.LogInformation(e.Button.ToString());
+		if (e.Button == 2)
+		{
+			Logger.LogInformation("Registered tier " + tier);
+			selectier = selected.list[tier];
+			selecitem = null;
+			selecitemtier = null;
+		}
 	}
 
 	void Exit()
 	{
 		selecitem = null;
+		selectier = null;
+		selecitemtier = null;
 		tl.SaveAll();
 	}
 
@@ -204,15 +245,29 @@
 
 	void NewTier()
 	{
-		selected.list.Add("New Tier", new List<TierItem>());
+		selected.list.Add("New Tier", new Tier("New Tier", "#EAD21F"));
 		tl.SaveAll();
 	}
 
 	void ChangeTierName(string neww, string old)
 	{
-		List<TierItem> temp = selected.list[old];
+		Tier temp = selected.list[old];
 		selected.list.Remove(old);
-		selected.list.Add(neww, temp);
+
+		while (true)
+		{
+			try
+			{
+				selected.list.Add(neww, temp);
+				break;
+			}
+			catch
+			{
+				neww += " (1)";
+			}
+		}
+		temp.name = neww;
+		temp.ogname = neww;
 		temp = null;
 		tl.SaveAll();
 	}
@@ -224,19 +279,27 @@
 
 	void Delete()
 	{
-		selected.list[selectier].Remove(selecitem);
+		selected.list[selecitemtier].items.Remove(selecitem);
 		selecitem = null;
-		selectier = "";
+		selecitemtier = "";
+		YouSure();
+		tl.SaveAll();
+	}
+
+	void DeleteTier()
+	{
+		selected.list.Remove(selectier.ogname);
+		selectier = null;
 		YouSure();
 		tl.SaveAll();
 	}
 
 	void StartDrag(MouseEventArgs e, int chara, string key) // Characacter Draggin'
 	{
-		Logger.LogInformation($"Started drag with {selected.list[key][chara].name} from tier {key}! {e.Button}");
+		Logger.LogInformation($"Started drag with {selected.list[key].items[chara].name} from tier {key}! {e.Button}");
 		if (e.Buttons == 2)
 		{
-			Select(selected.list[key][chara], key);
+			Select(selected.list[key].items[chara], key);
 		}
 		else
 		{
@@ -254,12 +317,12 @@
 			{
 				try
 				{
-					if (selected.list[dragtier][dragover] != selected.list[draggedtier][dragitem])
+					if (selected.list[dragtier].items[dragover] != selected.list[draggedtier].items[dragitem])
 					{
 						Logger.LogInformation($"Switcheroo!");
-						TierItem temp = selected.list[draggedtier][dragitem];
-						selected.list[draggedtier].RemoveAt(dragitem);
-						selected.list[dragtier].Insert(dragover, temp);
+						TierItem temp = selected.list[draggedtier].items[dragitem];
+						selected.list[draggedtier].items.RemoveAt(dragitem);
+						selected.list[dragtier].items.Insert(dragover, temp);
 						temp = null;
 						tl.SaveAll();
 					}
@@ -267,9 +330,9 @@
 				catch
 				{
 					Logger.LogInformation($"Switcheroo!");
-					TierItem temp = selected.list[draggedtier][dragitem];
-					selected.list[draggedtier].RemoveAt(dragitem);
-					selected.list[dragtier].Add(temp);
+					TierItem temp = selected.list[draggedtier].items[dragitem];
+					selected.list[draggedtier].items.RemoveAt(dragitem);
+					selected.list[dragtier].items.Add(temp);
 					temp = null;
 				}
 				dragover = -1;

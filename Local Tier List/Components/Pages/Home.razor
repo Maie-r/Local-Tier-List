@@ -37,10 +37,10 @@
 	{
 		<div class="maiedal d-flex flex-column text-center justify-content-center">
 			<div class="p-2 darken-95 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-6">
-				<p> Are you sure you want to permanently remove this tierlist? </p>
+				<p> Are you sure you want to permanently remove this tierlist? All tiers and items registered within will be deleted! </p>
 				<div class="d-flex flex-row flex-wrap mx-auto">
 					<button class="mx-2 text-light" @onclick="YouSure">No</button>
-					<button class="mx-2 text-danger" @onclick="Delete">Yes, remove it</button>
+					<button class="mx-2 text-danger" @onclick="Delete">Yes, remove it and all items within</button>
 				</div>
 			</div>
 		</div>
@@ -112,7 +112,12 @@
 
 	void Delete()
 	{
+		if (selected == selected2)
+		{
+			selected = null;
+		}
 		li.TierLists.Remove(selected2);
+		li.SaveAll();
 		yousure = false;
 	}
 }
