@@ -41,11 +41,11 @@ namespace Local_Tier_List.Data
                     {
                         temp.list.Add(temp2.name + "(1)", temp2);
                     }
-                    Debug.WriteLine(sep2.Length);
+                    //Debug.WriteLine(sep2.Length);
                     for (int j = 1; j < sep2.Length; j++) // every item
                     {
                         if (sep2[j] == "") { break; }
-                        temp.list[temp2.name].items.Add(new TierItem(sep2[j]));
+                        temp.list[temp2.name].items.Add(new TierItem(sep2[j], temp2));
                     }
 
                 }
@@ -68,7 +68,7 @@ namespace Local_Tier_List.Data
                     result += $"/-/{tier.name},{tier.color}\r\n";
                     foreach (var item in tier.items)
                     {
-                        Debug.WriteLine($"{item.name}, {item.img}");
+                        //Debug.WriteLine($"{item.name}, {item.img}");
                         result += $"{item.name}, {item.img}" + "\r\n";
                     }
                 }
@@ -115,7 +115,7 @@ namespace Local_Tier_List.Data
 
         public Tier(string[] data)
         {
-            Debug.WriteLine(data[0]);
+            //Debug.WriteLine(data[0]);
             this.name = data[0];
             this.ogname = data[0];
             this.color = data[1];
@@ -132,13 +132,15 @@ namespace Local_Tier_List.Data
     {
         public string name;
         public string img;
+        public Tier parent;
 
-        public TierItem(string both)
+        public TierItem(string both, Tier parent)
         {
             string[] eh = both.Split(',');
-            Debug.WriteLine(both);
+            //Debug.WriteLine(both);
             name = eh[0];
             img = eh[1];
+            this.parent = parent;
         }
     }
 }

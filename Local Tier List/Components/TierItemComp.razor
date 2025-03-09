@@ -1,0 +1,61 @@
+﻿@using Microsoft.Extensions.Logging
+@inject ILogger<TierItemComp> Logger
+
+<a class="clickable" draggable="true" @ondragover="OverHere" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e)" @ondragend="StopDrag">
+	<img src="@item.img" draggable="false" alt="@item.name" class="@(isminimal ? "tieritemsmall": "tieritem") rounded flex-fill m-1" />
+</a>
+
+@code {
+	[Parameter]
+	public TierItem item { get; set; }
+
+	[Parameter]
+	public int id { get; set; }
+
+	[Parameter]
+	public bool isminimal { get; set; }
+
+	[Parameter]
+	public EventCallback<TierItem> OnItemSelect { get; set; }
+	[Parameter]
+	public EventCallback<TierItem> OnItemDrag { get; set; }
+	[Parameter]
+	public EventCallback OnItemDragStop { get; set; }
+	[Parameter]
+	public EventCallback<int> OnItemOver { get; set; }
+	[Parameter]
+	public EventCallback OnItemOut { get; set; }
+
+	void Select(MouseEventArgs e)
+	{
+		if (e.Buttons == 2) // right click
+			OnItemSelect.InvokeAsync(item);
+	}
+
+	void StartDrag(MouseEventArgs e) // Characacter Draggin'
+	{
+		Logger.LogInformation($"Started drag with {item.name} from tier {item.parent.ogname}! {e.Button}");
+		if (e.Buttons == 2) // right click
+			OnItemSelect.InvokeAsync(item);
+		else
+		{
+			OnItemDrag.InvokeAsync(item);
+		}
+	}
+
+	void StopDrag(MouseEventArgs e)
+	{
+		Logger.LogInformation($"Stopped drag!");
+		OnItemDragStop.InvokeAsync();
+	}
+
+	async void OverHere()
+	{
+		await OnItemOver.InvokeAsync(id);
+	}
+
+	void OuttaHere(MouseEventArgs e)
+	{
+		OnItemOut.InvokeAsync();
+	}
+}

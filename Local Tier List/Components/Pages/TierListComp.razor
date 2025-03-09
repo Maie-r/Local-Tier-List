@@ -91,18 +91,7 @@
 								{
 									<MudTooltip class="col-2" Color="Color.Transparent">
 										<ChildContent>
-											@if (minimal)
-											{
-												<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onpointerup="() => Select(pair.Value.items[i], pair.Key)" @onclick="() => Select(pair.Value.items[i], pair.Key)">
-													<img src="@pair.Value.items[i].img" draggable="false" alt="@pair.Value.items[i].name" class="tieritemsmall rounded flex-fill m-1" />
-												</a>
-											}
-											else
-											{
-												<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onpointerup="() => Select(pair.Value.items[i], pair.Key)" @onclick="() => Select(pair.Value.items[i], pair.Key)">
-													<img src="@pair.Value.items[i].img" draggable="false" alt="@pair.Value.items[i].name" class="tieritem rounded m-1" />
-												</a>
-											}
+											<TierItemComp item="@pair.Value.items[i]" id="@i" isminimal="@minimal" OnItemSelect="Select" OnItemDrag="StartDrag" OnItemDragStop="StopDrag" OnItemOver="OverHere" OnItemOut="OuttaHere"></TierItemComp>
 										</ChildContent>
 										<TooltipContent>
 											<div class="text-light darken-95 rounded p-3 m-0">
@@ -113,18 +102,7 @@
 								}
 								else
 								{
-									@if (minimal)
-									{
-										<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value.items[i], pair.Key)">
-											<img src="@pair.Value.items[i].img" draggable="false" alt="@pair.Value.items[i].name" class="tieritemsmall rounded flex-fill m-1" />
-										</a>
-									}
-									else
-									{
-										<a class="clickable" draggable="true" @ondragover="() => OverHere(i)" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e, i, pair.Key)" @ondragend="StopDrag" @onclick="() => Select(pair.Value.items[i], pair.Key)">
-											<img src="@pair.Value.items[i].img" draggable="false" alt="@pair.Value.items[i].name" class="tieritem rounded m-1" />
-										</a>
-									}
+									<TierItemComp item="@pair.Value.items[i]" id="@i" isminimal="@minimal" OnItemSelect="Select" OnItemDrag="StartDrag" OnItemDragStop="StopDrag" OnItemOver="OverHere" OnItemOut="OuttaHere"></TierItemComp>
 								}
 							}
 						}
@@ -207,9 +185,16 @@
 		return false;
 	}
 
-	void Select(TierItem l, string key)
+	void Select(TierItem l)
 	{
 		selecitem = l;
+		selecitemtier = l.parent.ogname;
+		selectier = null;
+	}
+
+	void Select(TierItem i, string key)
+	{
+		selecitem = i;
 		selecitemtier = key;
 		selectier = null;
 	}
@@ -237,7 +222,7 @@
 
 	void Add(string key)
 	{
-		TierItem temp = new TierItem("NEW ITEM, https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQWp41SPuTxCXvopcXoaGCvnygZ193Kot0Zuw&s");
+		TierItem temp = new TierItem("NEW ITEM, https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQWp41SPuTxCXvopcXoaGCvnygZ193Kot0Zuw&s", selected.list[key]);
 		selected.list[key].Add(temp);
 		selecitem = temp;
 		tl.SaveAll();
@@ -294,21 +279,21 @@
 		tl.SaveAll();
 	}
 
+	void StartDrag(TierItem s) // Characacter Draggin'
+	{
+		//Logger.LogInformation($"Started drag with {selected.list[key].items[chara].name} from tier {key}! {e.Button}");
+		draggedtier = s.parent.ogname;
+		dragitem = selected.list[draggedtier].items.IndexOf(s);
+	}
+
 	void StartDrag(MouseEventArgs e, int chara, string key) // Characacter Draggin'
 	{
 		Logger.LogInformation($"Started drag with {selected.list[key].items[chara].name} from tier {key}! {e.Button}");
-		if (e.Buttons == 2)
-		{
-			Select(selected.list[key].items[chara], key);
-		}
-		else
-		{
-			draggedtier = key;
-			dragitem = chara;
-		}
+		draggedtier = key;
+		dragitem = chara;
 	}
 
-	void StopDrag(MouseEventArgs e)
+	void StopDrag()
 	{
 		if (dragover >= 0)
 		{
@@ -369,7 +354,7 @@
 		StateHasChanged();
 	}
 
-	void OuttaHere(MouseEventArgs e)
+	void OuttaHere()
 	{
 		Logger.LogInformation($"Mouse out (item)!");
 		dragover = -1;
