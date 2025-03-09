@@ -1,17 +1,19 @@
 ﻿@using Microsoft.Extensions.Logging
 @using System.Globalization
 @inject ILogger<TierItemComp> Logger
+@inject IJSRuntime JSRuntime
 
 <a class="clickable" draggable="true" @ondragover="OverHere" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e)" @ondragend="StopDrag">
-	@if (item.img == "")
+	@if (item.img == "" || NoImage)
 	{
-		<p class="@(isminimal ? "tieritemsmall": "tieritem") rounded d-flex flex-column overflow-hidden flex-fill flex-shrink-1 justify-content-center m-1 text-break text-wrap text-center" style="@GetFontSize(item.name)">@item.name</p>
+		<p class="@(isminimal ? "tieritemsmall": "tieritem") rounded d-flex flex-column flex-fill flex-shrink-1 justify-content-center m-1 text-wrap text-center" style="@GetFontSize(item.name)">@item.name</p>
 	}
 	else
 	{
-		<img src="@item.img" draggable="false" alt="@item.name" class="@(isminimal ? "tieritemsmall": "tieritem") rounded flex-fill m-1" />
+		<img src="@item.img" draggable="false" alt="@item.name" class="@(isminimal ? "tieritemsmall": "tieritem") rounded flex-fill m-1" @onerror="ImageFail"/>
 	}
 </a>
+<script src="imageHandler.js"></script>
 
 @code {
 	[Parameter]
@@ -24,6 +26,9 @@
 	public bool isminimal { get; set; }
 
 	[Parameter]
+	public bool NoImage { get; set; }
+
+	[Parameter]
 	public EventCallback<TierItem> OnItemSelect { get; set; }
 	[Parameter]
 	public EventCallback<TierItem> OnItemDrag { get; set; }
@@ -34,6 +39,13 @@
 	[Parameter]
 	public EventCallback OnItemOut { get; set; }
 
+	bool imageLoaded = true;
+
+	async void ImageFail()
+	{
+		imageLoaded = false;
+	}
+
 	void Select(MouseEventArgs e)
 	{
 		if (e.Buttons == 2) // right click
@@ -43,7 +55,7 @@
 	string GetFontSize(string name)
 	{
 		double size;
-		if (name.Length > 12)
+		if (true)//(name.Length > 12)
 		{
 			size = (1 - (((double)name.Length + 50) / (name.Length + 100))) * 50;
 		}
@@ -51,6 +63,8 @@
 		{
 			size = 27;
 		}
+		if (isminimal)
+			size *= 0.7;
 		return $"font-size: {size.ToString("F2", CultureInfo.InvariantCulture)}px";
 	}
 
