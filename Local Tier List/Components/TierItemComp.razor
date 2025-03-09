@@ -1,8 +1,16 @@
 ﻿@using Microsoft.Extensions.Logging
+@using System.Globalization
 @inject ILogger<TierItemComp> Logger
 
 <a class="clickable" draggable="true" @ondragover="OverHere" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e)" @ondragend="StopDrag">
-	<img src="@item.img" draggable="false" alt="@item.name" class="@(isminimal ? "tieritemsmall": "tieritem") rounded flex-fill m-1" />
+	@if (item.img == "")
+	{
+		<p class="@(isminimal ? "tieritemsmall": "tieritem") rounded d-flex flex-column overflow-hidden flex-fill flex-shrink-1 justify-content-center m-1 text-break text-wrap text-center" style="@GetFontSize(item.name)">@item.name</p>
+	}
+	else
+	{
+		<img src="@item.img" draggable="false" alt="@item.name" class="@(isminimal ? "tieritemsmall": "tieritem") rounded flex-fill m-1" />
+	}
 </a>
 
 @code {
@@ -30,6 +38,20 @@
 	{
 		if (e.Buttons == 2) // right click
 			OnItemSelect.InvokeAsync(item);
+	}
+
+	string GetFontSize(string name)
+	{
+		double size;
+		if (name.Length > 12)
+		{
+			size = (1 - (((double)name.Length + 50) / (name.Length + 100))) * 50;
+		}
+		else
+		{
+			size = 27;
+		}
+		return $"font-size: {size.ToString("F2", CultureInfo.InvariantCulture)}px";
 	}
 
 	void StartDrag(MouseEventArgs e) // Characacter Draggin'

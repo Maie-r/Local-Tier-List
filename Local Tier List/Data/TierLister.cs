@@ -69,7 +69,7 @@ namespace Local_Tier_List.Data
                     foreach (var item in tier.items)
                     {
                         //Debug.WriteLine($"{item.name}, {item.img}");
-                        result += $"{item.name}, {item.img}" + "\r\n";
+                        result += $"{item.name},{item.img}" + "\r\n";
                     }
                 }
                 if (i < TierLists.Count)

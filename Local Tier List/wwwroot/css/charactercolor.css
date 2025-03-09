@@ -39,12 +39,14 @@
 
 .tieritem {
     aspect-ratio: 1/1;
-    max-height: 100px;
+    height: 100px;
+    width: 100px;
 }
 
 .tieritemsmall {
     aspect-ratio: 1/1;
-    max-height: 64px;
+    height: 64px;
+    width: 64px;
 }
 
 .remove-bg{
@@ -67,6 +69,12 @@
 .clickable:hover img {
     border: solid!important;
     border-width: 0.25vw!important;
+    transition: border-width 0.25s;
+}
+
+.clickable:hover p {
+    border: solid !important;
+    border-width: 0.25vw !important;
     transition: border-width 0.25s;
 }
 

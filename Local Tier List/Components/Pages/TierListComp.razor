@@ -13,7 +13,7 @@
 				</div>
 				<img class="text-center d-flex mx-auto my-2" src="@selecitem.img" style="max-height: 400px; max-width: 400px"/>
 				<input type="text" class="spinput rounded flex-fill text-light p-2" @bind="@selecitem.name" placeholder="Item Name">
-				<input type="text" class="spinput rounded flex-fill text-light p-2" @bind="@selecitem.img" placeholder="Link">
+				<input type="text" class="spinput rounded flex-fill text-light p-2" @bind="@selecitem.img" placeholder="Image Link">
 				<button class="mx-2 text-danger" @onclick="YouSure">Remove</button>
 			</div>
 		</div>
@@ -38,7 +38,7 @@
 					<a class="clickable" @onclick="Exit">✖</a>
 				</div>
 				<div class="d-flex flex-column text-center justify-content-center mx-auto col-sm-1 py-1 py-sm-1 py-md-auto">
-					<input type="text" value="@selectier.name" class="rounded fs-2 py-md-auto py-1 m-0 flex-fill col-12 text-wrap text-light" @onchange="(e) => ChangeTierName(e.Value?.ToString(), selectier.ogname)" placeholder="Tier Title" style="background-color: @selectier.color">
+					<input type="text" value="@selectier.name" class="rounded fs-2 py-md-auto py-1 m-0 text-center flex-fill col-12 text-wrap text-light" @onchange="(e) => ChangeTierName(e.Value?.ToString(), selectier.ogname)" placeholder="Tier Title" style="background-color: @selectier.color">
 				</div>
 				<MudColorPicker Label="Tier Color" @bind-Text="selectier.color" Style="@($"color: {selectier.color};")" Placeholder="Select Color" />
 				<button class="mx-2 text-danger" @onclick="YouSure">Remove</button>
@@ -78,7 +78,7 @@
 		{
 			<div class="p-0 m-0 d-flex darken-25 flex-column flex-sm-row col-12">
 				<a class="d-flex clickable flex-column text-center justify-content-center col-sm-1 py-1 py-sm-1 py-md-auto me-1" @onmousedown="(e) => SelectTier(e, pair.Key)" style="background-color: @pair.Value.color">
-					<input type="text" value="@pair.Value.name" class="tierput rounded fs-2 py-md-auto py-1 m-0 flex-fill col-12 text-wrap text-light" @onchange="(e) => ChangeTierName(e.Value?.ToString(), pair.Key)" placeholder="Tier Title">
+					<input type="text" value="@pair.Value.name" class="tierput rounded d-flex fs-2 py-md-auto py-1 m-0 flex-fill col-12 text-wrap text-light" @onchange="(e) => ChangeTierName(e.Value?.ToString(), pair.Key)" placeholder="Tier Title">
 				</a>
 				<a class="d-flex flex-fill col-12 text-light" @ondragover="() => OverTier(pair.Key)" @ondragleave="OuttaTier">
 					<div class="d-flex text-start flex-wrap col-12" style="border-top: solid; border-bottom: solid; border-color: @pair.Value.color">
@@ -222,7 +222,7 @@
 
 	void Add(string key)
 	{
-		TierItem temp = new TierItem("NEW ITEM, https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQWp41SPuTxCXvopcXoaGCvnygZ193Kot0Zuw&s", selected.list[key]);
+		TierItem temp = new TierItem("NEW ITEM,", selected.list[key]);
 		selected.list[key].Add(temp);
 		selecitem = temp;
 		tl.SaveAll();
