@@ -1,6 +1,9 @@
 ﻿@page "/tier"
+@using System.Globalization
+@using System.Collections
 @using Microsoft.Extensions.Logging
 @inject ILogger<TierListComp> Logger
+@inject IJSRuntime JSRuntime
 <link href="css/charactercolor.css" rel="stylesheet" />
 
 <div>
@@ -58,20 +61,20 @@
 		}
 	}
 	<div class="form-check">
-		<input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" @onchange="() => Toggle(ref showcase)">
-		<label class="form-check-label" for="flexCheckDefault">
+		<input class="form-check-input" type="checkbox" value="" id="showcaseform" @onchange="() => Toggle(ref showcase)">
+		<label class="form-check-label" for="showcaseform">
 			Showcase Mode
 		</label>
 	</div>
 	<div class="form-check">
-		<input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" @onchange="() => Toggle(ref minimal)">
-		<label class="form-check-label" for="flexCheckDefault">
+		<input class="form-check-input" type="checkbox" value="" id="minimalform" @onchange="() => Toggle(ref minimal)">
+		<label class="form-check-label" for="minimalform">
 			Minimal Mode
 		</label>
 	</div>
 	<div class="form-check">
-		<input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" @onchange="() => Toggle(ref NoImg)">
-		<label class="form-check-label" for="flexCheckDefault">
+		<input class="form-check-input" type="checkbox" value="" id="textform" @onchange="() => Toggle(ref NoImg)">
+		<label class="form-check-label" for="textform">
 			Text Only
 		</label>
 	</div>
@@ -83,9 +86,19 @@
 		@foreach (var pair in selected.list)
 		{
 			<div class="p-0 m-0 d-flex darken-25 flex-column flex-sm-row col-12">
-				<a class="d-flex clickable flex-column text-center justify-content-center col-sm-1 py-1 py-sm-1 py-md-auto me-1" @onmousedown="(e) => SelectTier(e, pair.Key)" style="background-color: @pair.Value.color">
-					<input type="text" value="@pair.Value.name" class="tierput rounded d-flex fs-2 py-md-auto py-1 m-0 flex-fill col-12 text-wrap text-light" @onchange="(e) => ChangeTierName(e.Value?.ToString(), pair.Key)" placeholder="Tier Title">
+				<a class="text-box-container d-flex clickable flex-column text-center justify-content-center col-sm-1 py-1 py-sm-1 py-md-auto me-1" @onmousedown="(e) => SelectTier(e, pair.Key)" style="background-color: @pair.Value.color">
+					<input type="text" value="@pair.Value.name" class="tierput rounded d-flex py-md-auto p-1 m-0 flex-fill text-wrap overflow-visible text-break text-light" @onchange="(e) => ChangeTierName(e.Value?.ToString(), pair.Key)" placeholder="Tier Title" style="@GetFontSize(pair.Value.name); white-space: normal; word-wrap: break-word; overflow-wrap: break-word;">
+					@*<MudTextField @bind-Value="pair.Value.name" T="string" Text="@pair.Value.name" Variant="Variant.Outlined" @onblur="() => ChangeTierName(pair.Value)" AutoGrow Lines="4" Class="d-flex flex-column text-center justify-content-center text-light border-0" Style="@GetFontSize(pair.Value.name)"></MudTextField>*@
 				</a>
+				@*<a id="pair.Value.name" class="text-box-container d-flex clickable flex-column text-center justify-content-center col-sm-1 py-1 py-sm-1 py-md-auto me-1" @onmousedown="(e) => SelectTier(e, pair.Key)" style="background-color: @pair.Value.color">
+					<p contenteditable="plaintext-only" class="tierput rounded d-flex flex-column py-md-auto justify-content-center p-1 m-0 flex-fill text-center text-wrap overflow-hidden text-break text-light" @oninput="(e) => StoreTierName(e)" @onblur="(e) => ChangeTierName(e, pair.Key)" placeholder="Tier Title" style="@GetFontSize(pair.Value.name);">@pair.Value.name</p>
+				</a>*@
+				@*<textarea class="tierput col-sm-1 clickable rounded d-flex py-md-auto py-1 m-0 flex-column overflow-hidden px-auto justify-content-center flex-fill text-center text-light" 
+					@onmousedown="(e) => SelectTier(e, pair.Key)" @onchange="(e) => ChangeTierName(e.Value?.ToString(), pair.Key)" 
+					style="background-color: @pair.Value.color; @GetFontSize(pair.Value.name); resize: none; text-align-last: center">
+					@pair.Value.name
+				</textarea>*@
+
 				<a class="d-flex flex-fill col-12 text-light" @ondragover="() => OverTier(pair.Key)" @ondragleave="OuttaTier">
 					<div class="d-flex text-start flex-wrap col-12" style="border-top: solid; border-bottom: solid; border-color: @pair.Value.color">
 						@for (int local = 0; local < pair.Value.items.Count; local++)
@@ -116,11 +129,11 @@
 						{
 							if (minimal)
 							{
-								<h5 class="clickable p-0 m-0 justify-content-center rounded m-1 d-flex template tieritemsmall" @onclick="() => Add(pair.Key)"> New Item </h5>
+								<h5 class="clickable p-0 m-1 justify-content-center rounded px-auto text-center d-flex flex-column template tieritemsmall" @onclick="() => Add(pair.Key)"> New Item </h5>
 							}
 							else
 							{
-								<h5 class="clickable p-0 m-0 justify-content-center py-auto rounded my-auto d-flex template tieritem" @onclick="() => Add(pair.Key)"> New Item </h5>
+								<h5 class="clickable p-0 m-0 justify-content-center py-auto rounded text-center my-auto d-flex flex-column template tieritem" @onclick="() => Add(pair.Key)"> New Item </h5>
 							}
 						}
 					</div>
@@ -141,6 +154,8 @@
 	</div>
 </div>
 
+<script src="imageHandler.js"></script>
+
 
 @code
 {
@@ -159,6 +174,8 @@
 	bool minimal = false;
 	bool NoImg = false;
 	string filter = "";
+	string temptiername = "";
+	ElementReference temptier;
 
 	string dragtier = ""; // which tier mouse is over
 	int dragover; // which item mouse is over
@@ -173,6 +190,22 @@
 	void Toggle(ref bool thing)
 	{
 		thing = !thing;
+	}
+
+	string GetFontSize(string name)
+	{
+		double size;
+		if (name.Length > 8)
+		{
+			size = (1 - (((double)name.Length + 1) / (name.Length + 1.5))) * 400;
+		}
+		else
+		{
+			size = 30;
+		}
+		if (minimal)
+			size *= 0.7;
+		return $"font-size: {size.ToString("F2", CultureInfo.InvariantCulture)}px";
 	}
 
 	bool InFilter(string name)
@@ -241,8 +274,14 @@
 		tl.SaveAll();
 	}
 
+	void ChangeTierName(Tier tier)
+	{
+		ChangeTierName(tier.name, tier.ogname);
+	}
+
 	void ChangeTierName(string neww, string old)
 	{
+		Logger.LogInformation($"{neww}");
 		Tier temp = selected.list[old];
 		selected.list.Remove(old);
 
@@ -262,6 +301,20 @@
 		temp.ogname = neww;
 		temp = null;
 		tl.SaveAll();
+	}
+
+	void ChangeTierName(ChangeEventArgs e, string old)
+	{
+		if (temptiername != "")
+			ChangeTierName(temptiername, old);
+		temptiername = "";
+	}
+
+	async void StoreTierName(ChangeEventArgs e)
+	{
+		//temptiername = neww;
+		string h = await JSRuntime.InvokeAsync<string>("getPlainText", temptiername);
+		Logger.LogInformation(h);
 	}
 
 	void YouSure()
@@ -288,17 +341,18 @@
 
 	void StartDrag(TierItem s) // Characacter Draggin'
 	{
-		//Logger.LogInformation($"Started drag with {selected.list[key].items[chara].name} from tier {key}! {e.Button}");
 		draggedtier = s.parent.ogname;
 		dragitem = selected.list[draggedtier].items.IndexOf(s);
+		Logger.LogInformation($"Started drag with {s.name} from tier {draggedtier} with id {dragitem}");
 	}
 
+	/*
 	void StartDrag(MouseEventArgs e, int chara, string key) // Characacter Draggin'
-	{
+		{
 		Logger.LogInformation($"Started drag with {selected.list[key].items[chara].name} from tier {key}! {e.Button}");
 		draggedtier = key;
 		dragitem = chara;
-	}
+	}*/
 
 	void StopDrag()
 	{
@@ -313,6 +367,7 @@
 					{
 						Logger.LogInformation($"Switcheroo!");
 						TierItem temp = selected.list[draggedtier].items[dragitem];
+						temp.parent = selected.list[dragtier];
 						selected.list[draggedtier].items.RemoveAt(dragitem);
 						selected.list[dragtier].items.Insert(dragover, temp);
 						temp = null;
@@ -321,8 +376,9 @@
 				}
 				catch
 				{
-					Logger.LogInformation($"Switcheroo!");
+					Logger.LogInformation($"Switche2!");
 					TierItem temp = selected.list[draggedtier].items[dragitem];
+					temp.parent = selected.list[dragtier];
 					selected.list[draggedtier].items.RemoveAt(dragitem);
 					selected.list[dragtier].items.Add(temp);
 					temp = null;
@@ -354,6 +410,7 @@
 		StateHasChanged();
 	}
 
+
 	void OverHere(int pos)
 	{
 		Logger.LogInformation($"Mouse over some item!");
@@ -368,4 +425,11 @@
 		StateHasChanged();
 	}
 	// End Characacter Draggin'
+
+	public void Dispose()
+	{
+		selected = null;
+		selectier = null;
+		selecitem = null;
+	}
 }

@@ -1,5 +1,6 @@
 ﻿@using Microsoft.Extensions.Logging
 @using System.Globalization
+@implements IDisposable
 @inject ILogger<TierItemComp> Logger
 @inject IJSRuntime JSRuntime
 
@@ -41,7 +42,7 @@
 
 	bool imageLoaded = true;
 
-	async void ImageFail()
+	void ImageFail()
 	{
 		imageLoaded = false;
 	}
@@ -93,5 +94,10 @@
 	void OuttaHere(MouseEventArgs e)
 	{
 		OnItemOut.InvokeAsync();
+	}
+
+	public void Dispose()
+	{
+		item = null;
 	}
 }

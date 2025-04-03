@@ -61,7 +61,6 @@ namespace Local_Tier_List.Data
             foreach (var list in TierLists) // each tier list
             {
                 i++;
-                int j = 0;
                 result += list.name;
                 foreach (Tier tier in list.list.Values)
                 {
@@ -96,6 +95,24 @@ namespace Local_Tier_List.Data
         {
             this.name = name;
             list = new Dictionary<string, Tier>();
+        }
+
+        public TierList(string name, bool templatefill)
+        {
+            this.name = name;
+            list = new Dictionary<string, Tier>();
+            if (templatefill)
+                TemplateTiers();
+        }
+
+        void TemplateTiers()
+        {
+            list.Add("S", new Tier("S", "#6603fcff"));
+            list.Add("A", new Tier("A", "#d31cd9ff"));
+            list.Add("B", new Tier("B", "#d92b59ff"));
+            list.Add("C", new Tier("C", "#de6626ff"));
+            list.Add("D", new Tier("D", "#e8b426ff"));
+            list.Add("F", new Tier("F", "#6f6e78ff"));
         }
     }
 

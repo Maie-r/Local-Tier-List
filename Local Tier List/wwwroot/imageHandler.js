@@ -16,3 +16,15 @@ window.imageEvents = {
     };
   }
 }
+
+window.getInnerText = (element) => {
+    if (!element) {
+        return "";
+    }
+    return element.innerText || "";
+};
+
+window.getPlainText = function (elementId) {
+    const element = document.getElementById(elementId);
+    return element ? element.innerText : "";
+};
