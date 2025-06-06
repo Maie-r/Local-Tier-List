@@ -148,6 +148,9 @@
 	[Parameter]
 	public TierLister tl { get; set; }
 
+	[Parameter]
+	public EventCallback OnSave { get; set; }
+
 	Tier? selectier;
 
 	TierItem? selecitem;
@@ -241,7 +244,7 @@
 		selecitem = null;
 		selectier = null;
 		selecitemtier = null;
-		tl.SaveAll();
+		TrySave();
 	}
 
 	void Add(string key)
@@ -249,13 +252,13 @@
 		TierItem temp = new TierItem("NEW ITEM,", selected.list[key]);
 		selected.list[key].Add(temp);
 		selecitem = temp;
-		tl.SaveAll();
+		TrySave();
 	}
 
 	void NewTier()
 	{
 		selected.list.Add("New Tier", new Tier("New Tier", "#EAD21F"));
-		tl.SaveAll();
+		TrySave();
 	}
 
 	void ChangeTierName(Tier tier)
@@ -284,7 +287,7 @@
 		temp.name = neww;
 		temp.ogname = neww;
 		temp = null;
-		tl.SaveAll();
+		TrySave();
 	}
 
 	void ChangeTierName(ChangeEventArgs e, string old)
@@ -301,6 +304,13 @@
 		Logger.LogInformation(h);
 	}
 
+	void TrySave()
+	{
+		if (tl != null)
+			tl.SaveAll();
+		OnSave.InvokeAsync();
+	}
+
 	void YouSure()
 	{
 		yousure = !yousure;
@@ -312,7 +322,7 @@
 		selecitem = null;
 		selecitemtier = "";
 		YouSure();
-		tl.SaveAll();
+		TrySave();
 	}
 
 	void DeleteTier()
@@ -320,7 +330,7 @@
 		selected.list.Remove(selectier.ogname);
 		selectier = null;
 		YouSure();
-		tl.SaveAll();
+		TrySave();
 	}
 
 	void StartDrag(TierItem s) // Characacter Draggin'

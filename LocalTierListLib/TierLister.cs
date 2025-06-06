@@ -57,7 +57,7 @@ namespace LocalTierListLib
             {
                 return null;
             }
-            string[] tierlists = File.ReadAllText($"link").Split(';');
+            string[] tierlists = File.ReadAllText(link).Split(';');
             foreach (string tierlist in tierlists) // every tier list
             {
                 TierList temp = ReadList(tierlist);
@@ -132,10 +132,12 @@ namespace LocalTierListLib
         public static void SaveSpecific(string link, TierList newtl)
         {
             List<TierList> TierLists = LoadFrom(link);
+            Debug.WriteLine(TierLists.Count);
             for (int j = 0; j < TierLists.Count; j++)
             {
                 if (TierLists[j].name == newtl.name)
                 {
+                    Debug.WriteLine("Match found");
                     TierLists[j] = newtl;
                     break;
                 }
