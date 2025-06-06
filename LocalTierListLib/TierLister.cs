@@ -22,19 +22,30 @@ namespace LocalTierListLib
 
         public static TierList GetSpecificList(string link, string name)
         {
-            StreamReader sw = new StreamReader(link);
+            if (File.Exists(link))
+            {
+                string[] tierlists = File.ReadAllText(link).Split(';');
+                foreach (string tierlist in tierlists) // every tier list
+                {
+                    if (tierlist.Split("/-/")[0].Contains(name))
+                        return ReadList(tierlist);
+                }
+            }
+            /*StreamReader sw = new StreamReader(link);
             string line;
             for (line = sw.ReadLine(); !line.Contains(name) && line != null; line = sw.ReadLine());
             if (line != null) // if the list does not exist
             {
-                string list = line;
+                string list = "\r\n" + line;
                 while (!line.StartsWith(';') && line != null)
                 {
+                    Debug.WriteLine(line);
                     list += line;
                     line = sw.ReadLine();
                 }
+                list += "\r\n";
                 return ReadList(list);
-            }
+            }*/
             Debug.WriteLine($"Couldn't find list {name} at {link} !!");
             return null;
         }
@@ -65,6 +76,7 @@ namespace LocalTierListLib
                 File.WriteAllText($"{folder}lists.txt", "");
             }
             string[] tierlists = File.ReadAllText($"{folder}lists.txt").Split(';');
+            Debug.WriteLine(tierlists[0]);
             foreach (string tierlist in tierlists) // every tier list
             {
                 TierList temp = ReadList(tierlist);

@@ -48,7 +48,25 @@
 	}
 	@if (selected != null)
 	{
-		<TierListComp selected="selected" tl="TierService.tl"/>
+		<div class="form-check">
+			<input class="form-check-input" type="checkbox" value="" id="showcaseform" @onchange="() => Toggle(ref showcase)">
+			<label class="form-check-label" for="showcaseform">
+				Showcase Mode
+			</label>
+		</div>
+		<div class="form-check">
+			<input class="form-check-input" type="checkbox" value="" id="minimalform" @onchange="() => Toggle(ref minimal)">
+			<label class="form-check-label" for="minimalform">
+				Minimal Mode
+			</label>
+		</div>
+		<div class="form-check">
+			<input class="form-check-input" type="checkbox" value="" id="textform" @onchange="() => Toggle(ref NoImg)">
+			<label class="form-check-label" for="textform">
+				Text Only
+			</label>
+		</div>
+		<TierListComp selected="selected" tl="TierService.tl" showcase="showcase" minimal="minimal" NoImg="NoImg"/>
 	}
 </div>
 
@@ -59,6 +77,8 @@
 	TierList? selected;
 
 	TierList? selected2;
+
+	bool showcase, minimal, NoImg;
 
 	bool yousure = false;
 
@@ -105,6 +125,11 @@
 			yousure = false;
 			selected2 = null;
 		}
+	}
+
+	void Toggle(ref bool t)
+	{
+		t = !t;
 	}
 
 	void Delete()
