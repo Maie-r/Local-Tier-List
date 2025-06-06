@@ -159,15 +159,16 @@
 
 @code
 {
-	[CascadingParameter]
-	TierList selected { get; set; }
+	[Parameter]
+	public required TierList selected { get; set; }
+
+	[Parameter]
+	public required TierLister tl { get; set; }
 
 	Tier? selectier;
 
 	TierItem? selecitem;
 	string selecitemtier = "";
-
-	TierLister tl;
 
 	bool yousure;
 	bool showcase = false;
@@ -181,11 +182,6 @@
 	int dragover; // which item mouse is over
 	string draggedtier = ""; // which tier dragged item was from
 	int dragitem; // index of dragged item
-
-	protected override async Task OnInitializedAsync()
-	{
-		tl = await itier.Start();
-	}
 
 	void Toggle(ref bool thing)
 	{

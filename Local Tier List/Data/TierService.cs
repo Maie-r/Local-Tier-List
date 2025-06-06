@@ -3,27 +3,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using LocalTierListLib;
 
 namespace Local_Tier_List.Data
 {
-    public class TierService : ITier
+    public class TierService
     {
-        private TierLister _tierlister;
+        private static TierLister _tierlister = new TierLister();
 
-        public TierService()
-        {
-            _tierlister = new TierLister();
-        }
+        public static TierLister tl { get { return _tierlister; } }
 
-        public Task<TierLister> Start()
-        {
-            return Task.FromResult(_tierlister);
-        }
+        public static List<TierList> TierLists 
+        { get { return _tierlister.TierLists; } }
 
-        public async Task Reload()
+        public static void SaveAll()
         {
-            _tierlister = null;
-            await Task.Run(() => _tierlister = new TierLister());
+            _tierlister.SaveAll();
         }
     }
 }

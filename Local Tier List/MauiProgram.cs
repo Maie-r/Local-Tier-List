@@ -18,14 +18,6 @@ namespace Local_Tier_List
 
             builder.Services.AddMauiBlazorWebView();
             builder.Services.AddMudServices();
-            try
-            {
-                builder.Services.AddSingleton<ITier, TierService>();
-            }
-            catch
-            {
-                throw new Exception("Couldn't load data");
-            }
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();

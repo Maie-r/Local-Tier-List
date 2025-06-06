@@ -48,16 +48,13 @@
 	}
 	@if (selected != null)
 	{
-		<CascadingValue Value="selected">
-			<TierListComp/>
-		</CascadingValue>
+		<TierListComp selected="selected" tl="TierService.tl"/>
 	}
 </div>
 
 
 @code
 {
-	TierLister li;
 	List<TierList>? lists;
 	TierList? selected;
 
@@ -67,8 +64,7 @@
 
 	protected override async Task OnInitializedAsync()
 	{
-		li = await itier.Start();
-		lists = li.TierLists;
+		lists = TierService.TierLists;
 	}
 
 	void Select(TierList l)
@@ -85,8 +81,8 @@
 
 	void NewTierList()
 	{
-		li.TierLists.Add(new TierList($"Tierlist {li.TierLists.Count + 1}", true));
-		Select(li.TierLists.Last());
+		TierService.TierLists.Add(new TierList($"Tierlist {TierService.TierLists.Count + 1}", true));
+		Select(TierService.TierLists.Last());
 	}
 
 	void YouSure(TierList l)
@@ -117,8 +113,8 @@
 		{
 			selected = null;
 		}
-		li.TierLists.Remove(selected2);
-		li.SaveAll();
+		TierService.TierLists.Remove(selected2);
+		TierService.SaveAll();
 		yousure = false;
 	}
 }
