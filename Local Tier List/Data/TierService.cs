@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using LocalTierListLib;
+using MaieBlazorLib.LocalTierLister;
 
 namespace Local_Tier_List.Data
 {

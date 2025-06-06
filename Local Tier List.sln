@@ -5,7 +5,7 @@ VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Local Tier List", "Local Tier List\Local Tier List.csproj", "{05180F88-66DC-4C6E-96B5-C9B015654808}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LocalTierListLib", "LocalTierListLib\LocalTierListLib.csproj", "{391BF7A0-1CCF-44B4-BE8F-E52E80EEE0B8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MaieBlazorLib", "..\MaieBlazorLib\MaieBlazorLib\MaieBlazorLib.csproj", "{B8CA0BAF-5914-4089-9E0D-FB21B683A30F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,10 +19,10 @@ Global
 		{05180F88-66DC-4C6E-96B5-C9B015654808}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{05180F88-66DC-4C6E-96B5-C9B015654808}.Release|Any CPU.Build.0 = Release|Any CPU
 		{05180F88-66DC-4C6E-96B5-C9B015654808}.Release|Any CPU.Deploy.0 = Release|Any CPU
-		{391BF7A0-1CCF-44B4-BE8F-E52E80EEE0B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{391BF7A0-1CCF-44B4-BE8F-E52E80EEE0B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{391BF7A0-1CCF-44B4-BE8F-E52E80EEE0B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{391BF7A0-1CCF-44B4-BE8F-E52E80EEE0B8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8CA0BAF-5914-4089-9E0D-FB21B683A30F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8CA0BAF-5914-4089-9E0D-FB21B683A30F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8CA0BAF-5914-4089-9E0D-FB21B683A30F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8CA0BAF-5914-4089-9E0D-FB21B683A30F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
