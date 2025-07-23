@@ -43,7 +43,7 @@
 
     <ItemGroup>
         <!-- App Icon -->
-        <MauiIcon Include="Resources\AppIcon\ender.png" ForegroundFile="Resources\AppIcon\ender.png" Color="#512BD4" />
+        <MauiIcon Include="Resources\AppIcon\tierlist.ico" ForegroundFile="Resources\AppIcon\tierlist.ico" />
 
         <!-- Custom Fonts -->
         <MauiFont Include="Resources\Fonts\*" />
@@ -62,6 +62,11 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\MaieBlazorLib\MaieBlazorLib\MaieBlazorLib.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Resources\Images\" />
+      <Folder Include="Resources\Splash\" />
     </ItemGroup>
 
 </Project>
