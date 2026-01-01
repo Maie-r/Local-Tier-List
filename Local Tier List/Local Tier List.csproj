@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
     <PropertyGroup>
-        <TargetFrameworks>net8.0-android</TargetFrameworks>
-        <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net8.0-windows10.0.19041.0</TargetFrameworks>
+        <TargetFrameworks>net10.0-android</TargetFrameworks>
+        <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
         <!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
         <!-- <TargetFrameworks>$(TargetFrameworks);net8.0-tizen</TargetFrameworks> -->
 
@@ -25,7 +25,7 @@
         <ApplicationTitle>Local Tier List</ApplicationTitle>
 
         <!-- App Identifier -->
-        <ApplicationId>com.companyname.localtierlist</ApplicationId>
+        <ApplicationId>com.maieapps.localtierlist</ApplicationId>
 
         <!-- Versions -->
         <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
@@ -43,7 +43,7 @@
 
     <ItemGroup>
         <!-- App Icon -->
-        <MauiIcon Include="Resources\AppIcon\tierlist.ico" ForegroundFile="Resources\AppIcon\tierlist.ico" />
+        <MauiIcon Include="Resources\AppIcon\tierlist.png" ForegroundFile="Resources\AppIcon\tierlist.png" />
 
         <!-- Custom Fonts -->
         <MauiFont Include="Resources\Fonts\*" />
@@ -53,11 +53,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
-        <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
-        <PackageReference Include="MudBlazor" Version="8.7.0" />
+        <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.20" />
+        <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="10.0.20" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="10.0.20" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.1" />
+        <PackageReference Include="MudBlazor" Version="8.15.0" />
     </ItemGroup>
 
     <ItemGroup>

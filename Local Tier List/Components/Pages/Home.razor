@@ -5,7 +5,7 @@
 	<h1 class="text-light">Local Tier List Maker</h1>
 	<div class="row col-12 d-flex flex-column text-light m-2">
 		<h5> Tier Lists: </h5>
-		@if (lists.Count <= 0)
+		@if (lists!.Count <= 0)
 		{
 			<div class="col-sm-12 col-lg-4 mx-2 flex-column justify-content-center d-flex flex-fill">
 				<h5> There are none. </h5>
@@ -87,6 +87,11 @@
 		lists = TierService.TierLists;
 	}
 
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+        StateHasChanged();
+	}
+
 	void Select(TierList l)
 	{
 		if (l == selected)
@@ -138,6 +143,7 @@
 		{
 			selected = null;
 		}
+		if (selected2 == null) return;
 		TierService.TierLists.Remove(selected2);
 		TierService.SaveAll();
 		yousure = false;

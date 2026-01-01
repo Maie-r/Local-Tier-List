@@ -91,6 +91,7 @@
 
 .draggable {
     cursor: crosshair;
+    touch-action: none;
 }
 .draggable:hover h3 .team span {
     color: var(--color-highlight)!important;
