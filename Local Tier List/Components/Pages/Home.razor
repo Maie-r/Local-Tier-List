@@ -1,14 +1,14 @@
 ﻿@page "/"
 <link href="css/charactercolor.css" rel="stylesheet" />
 
-<div class="m-md-1 p-md-1 m-lg-4 p-lg-4">
+<div class="m-md-1 p-md-1 m-lg-4 p-lg-4 overflow-hidden">
 	<h1 class="text-light">Local Tier List Maker</h1>
 	<div class="row col-12 d-flex flex-column text-light m-2">
 		<h5> Tier Lists: </h5>
 		@if (lists!.Count <= 0)
 		{
 			<div class="col-sm-12 col-lg-4 mx-2 flex-column justify-content-center d-flex flex-fill">
-				<h5> There are none. </h5>
+				<h5> There are no saved TierLists, create one with the "New TierList" button!. </h5>
 			</div>
 		}
 		<div class="row mx-1 flex-row justify-content-center col-12 flex-fill flex-wrap d-flex">
@@ -85,6 +85,9 @@
 	protected override async Task OnInitializedAsync()
 	{
 		lists = TierService.TierLists;
+		if (lists == null)
+			lists = new List<TierList>();		
+		
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
