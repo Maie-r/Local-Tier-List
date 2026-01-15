@@ -1,4 +1,7 @@
 ﻿@page "/"
+@using System.Text.Json
+@using Microsoft.Extensions.Logging
+@inject ILogger<Home> Logger
 <link href="css/charactercolor.css" rel="stylesheet" />
 
 <div class="m-md-1 p-md-1 m-lg-4 p-lg-4 overflow-hidden">
@@ -18,12 +21,19 @@
 				<div class="row col-sm-4 col-md-3 col-lg-2 mx-0 my-1 d-flex flex-fill flex-wrap">
 					<div class="row p-0 col-12 d-flex flex-fill">
 						<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
-							<a class="bg-highlight col-10 text-light text-center p-2 rounded clickable" @onclick="() => Select(lists[i])">@lists[i].name</a>
-							<button class="text-light col-2 p-2 ms-1 bg-danger clickable rounded flex-nowrap" @onclick="() => YouSure(lists[i])">✖</button>
+							<a class="bg-highlight col-10 text-light text-center p-2 rounded clickable align-items-center" @onclick="() => Select(lists[i])">@lists[i].name</a>
+							<button class="text-light col-2 p-2 ms-1 bg-danger clickable rounded flex-nowrap align-items-center" @onclick="() => YouSure(lists[i])">✖</button>
 						</div>
 					</div>
 				</div>
 			}
+			<div class="row col-sm-4 col-md-3 col-lg-2 mx-0 my-1 d-flex flex-fill flex-wrap">
+				<div class="row p-0 col-12 d-flex flex-fill">
+					<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
+						<h5 class="clickable flex-fill p-0 m-0 text-center rounded bg-primary align-items-center" @onclick="ImportOpen"> Import Tierlists </h5>
+					</div>
+				</div>
+			</div>
 			<div class="row col-sm-4 col-md-3 col-lg-2 mx-0 my-1 d-flex flex-fill flex-wrap">
 				<div class="row p-0 col-12 d-flex flex-fill">
 					<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
@@ -41,6 +51,23 @@
 				<div class="d-flex flex-row flex-wrap mx-auto">
 					<button class="mx-2 text-light" @onclick="YouSure">No</button>
 					<button class="mx-2 text-danger" @onclick="Delete">Yes, remove it and all items within</button>
+				</div>
+			</div>
+		</div>
+
+	}
+	@if (ImportMenu)
+	{
+		<div class="maiedal d-flex flex-column text-center justify-content-center">
+			<div class="p-2 darken-95 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-6">
+				<p> Paste below the JSON string of the Tierlist you want to import! </p>
+                <textarea class="font-monospace bg-dark text-light col-12 mb-2" style="height:200px;" @bind="importString"></textarea>
+				<div>
+					<p class="text-danger">@importErr</p>
+				</div>
+				<div class="d-flex flex-row flex-wrap mx-auto">
+					<button class="mx-2 text-light" @onclick="() => ImportMenu = false">Cancel</button>
+					<button class="mx-2 bg-highlight text-light" @onclick="ImportTierLists">Import</button>
 				</div>
 			</div>
 		</div>
@@ -78,7 +105,10 @@
 
 	TierList? selected2;
 
-	bool showcase, minimal, NoImg;
+	string importString = "";
+	string importErr = "";
+
+	bool showcase, minimal, NoImg, ImportMenu;
 
 	bool yousure = false;
 
@@ -87,12 +117,12 @@
 		lists = TierService.TierLists;
 		if (lists == null)
 			lists = new List<TierList>();		
-		
+
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
-        StateHasChanged();
+		StateHasChanged();
 	}
 
 	void Select(TierList l)
@@ -132,6 +162,41 @@
 		{
 			yousure = false;
 			selected2 = null;
+		}
+	}
+
+	void ImportOpen()
+	{
+		ImportMenu = true;
+	}
+
+	void ImportTierLists()
+	{
+		if (!String.IsNullOrEmpty(importString))
+		{
+			try
+			{
+				var imported = TierService.Import(importString);
+				if (imported != null && imported.Count > 0)
+				{
+					foreach (var tl in imported)
+					{
+						TierService.TierLists.Add(tl);
+					}
+					TierService.SaveAll();
+					lists = TierService.TierLists;
+					importErr = "";
+					ImportMenu = false;
+				}
+				else
+				{
+					importErr = "Couldn't identify any elements in the json...";
+				}
+			}
+			catch (Exception e)
+			{
+				importErr = e.Message;
+			}
 		}
 	}
 

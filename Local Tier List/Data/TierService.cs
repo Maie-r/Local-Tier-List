@@ -35,5 +35,10 @@ namespace Local_Tier_List.Data
         {
             _tierlister.SaveAll();
         }
+
+        public static List<TierList> Import(string ImportJson)
+        {
+            return _tierlister.LoadFromJson(ImportJson);
+        }
     }
 }
