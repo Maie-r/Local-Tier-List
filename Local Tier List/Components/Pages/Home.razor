@@ -1,11 +1,29 @@
 ﻿@page "/"
 @using System.Text.Json
 @using Microsoft.Extensions.Logging
+@using Microsoft.Maui.ApplicationModel
 @inject ILogger<Home> Logger
+@inject IJSRuntime JS
 <link href="css/charactercolor.css" rel="stylesheet" />
 
 <div class="m-md-1 p-md-1 m-lg-4 p-lg-4 overflow-hidden">
 	<h1 class="text-light">Local Tier List Maker</h1>
+	<div class="d-flex col-12 col-md-6">
+		<div class="row col-sm-4 col-md-3 col-lg-2 mx-2 my-1 d-flex flex-fill flex-wrap">
+			<div class="row p-0 col-12 d-flex flex-fill">
+				<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
+					<h5 class="clickable flex-fill p-1 m-0 text-center rounded bg-primary align-content-center" @onclick="ImportOpen"> Import Tierlists </h5>
+				</div>
+			</div>
+		</div>
+		<div class="row col-sm-4 col-md-3 col-lg-2 mx-2 my-1 d-flex flex-fill flex-wrap">
+			<div class="row p-0 col-12 d-flex flex-fill">
+				<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
+					<h5 class="clickable flex-fill p-2 m-0 text-center rounded bg-primary align-content-center" @onclick="ExportAll"> Export All Tierlists </h5>
+				</div>
+			</div>
+		</div>
+	</div>
 	<div class="row col-12 d-flex flex-column text-light m-2">
 		<h5> Tier Lists: </h5>
 		@if (lists!.Count <= 0)
@@ -21,8 +39,8 @@
 				<div class="row col-sm-4 col-md-3 col-lg-2 mx-0 my-1 d-flex flex-fill flex-wrap">
 					<div class="row p-0 col-12 d-flex flex-fill">
 						<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
-							<a class="bg-highlight col-10 text-light text-center p-2 rounded clickable align-items-center" @onclick="() => Select(lists[i])">@lists[i].name</a>
-							<button class="text-light col-2 p-2 ms-1 bg-danger clickable rounded flex-nowrap align-items-center" @onclick="() => YouSure(lists[i])">✖</button>
+							<a class="bg-highlight col-10 text-light text-center justify-content-center p-2 rounded clickable align-content-center" @onclick="() => Select(lists[i])">@lists[i].name</a>
+							<button class="text-light col-2 p-2 ms-1 bg-danger clickable rounded flex-nowrap align-content-center" @onclick="() => YouSure(lists[i])">✖</button>
 						</div>
 					</div>
 				</div>
@@ -30,14 +48,7 @@
 			<div class="row col-sm-4 col-md-3 col-lg-2 mx-0 my-1 d-flex flex-fill flex-wrap">
 				<div class="row p-0 col-12 d-flex flex-fill">
 					<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
-						<h5 class="clickable flex-fill p-0 m-0 text-center rounded bg-primary align-items-center" @onclick="ImportOpen"> Import Tierlists </h5>
-					</div>
-				</div>
-			</div>
-			<div class="row col-sm-4 col-md-3 col-lg-2 mx-0 my-1 d-flex flex-fill flex-wrap">
-				<div class="row p-0 col-12 d-flex flex-fill">
-					<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
-						<h5 class="clickable flex-fill p-0 m-0 text-center rounded template" @onclick="NewTierList"> New Tierlist </h5>
+						<h5 class="clickable flex-fill p-0 m-0 text-center rounded template align-content-center" @onclick="NewTierList"> New Tierlist </h5>
 					</div>
 				</div>
 			</div>
@@ -60,14 +71,14 @@
 	{
 		<div class="maiedal d-flex flex-column text-center justify-content-center">
 			<div class="p-2 darken-95 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-6">
-				<p> Paste below the JSON string of the Tierlist you want to import! </p>
+				<p> Paste below the JSON string of the Tierlist(s) you want to import! </p>
                 <textarea class="font-monospace bg-dark text-light col-12 mb-2" style="height:200px;" @bind="importString"></textarea>
 				<div>
 					<p class="text-danger">@importErr</p>
 				</div>
 				<div class="d-flex flex-row flex-wrap mx-auto">
-					<button class="mx-2 text-light" @onclick="() => ImportMenu = false">Cancel</button>
-					<button class="mx-2 bg-highlight text-light" @onclick="ImportTierLists">Import</button>
+					<button class="mx-2 text-light rounded p-2" @onclick="() => ImportMenu = false">Cancel</button>
+					<button class="mx-2 bg-highlight rounded p-2 text-light" @onclick="ImportTierLists">Import</button>
 				</div>
 			</div>
 		</div>
@@ -168,6 +179,42 @@
 	void ImportOpen()
 	{
 		ImportMenu = true;
+	}
+
+	async Task ExportAll()
+	{
+		var json = TierService.tl?.ExportJson() ?? string.Empty;
+		if (string.IsNullOrEmpty(json))
+		{
+			Logger.LogWarning("ExportAll: no JSON produced from TierService.tl.ExportJson()");
+			return;
+		}
+
+		try
+		{
+			#if ANDROID || WINDOWS || IOS || MACCATALYST
+			// Use native MAUI clipboard when running as a MAUI app (Android, Windows, iOS, MacCatalyst).
+			await Clipboard.SetTextAsync(json);
+			#else
+			// Fallback for browser/web: use navigator.clipboard via JS interop.
+			await JS.InvokeVoidAsync("navigator.clipboard.writeText", json);
+			#endif
+			Logger.LogInformation("Exported JSON copied to clipboard.");
+		}
+		catch (Exception ex)
+		{
+			Logger.LogError(ex, "Failed to copy exported JSON to clipboard using primary method.");
+			// Try the other approach as a best-effort fallback.
+			try
+			{
+				await JS.InvokeVoidAsync("navigator.clipboard.writeText", json);
+				Logger.LogInformation("Fallback: exported JSON copied to clipboard via JS.");
+			}
+			catch (Exception jsEx)
+			{
+				Logger.LogError(jsEx, "Fallback copy to clipboard via JS also failed.");
+			}
+		}
 	}
 
 	void ImportTierLists()
