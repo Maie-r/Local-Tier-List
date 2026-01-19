@@ -43,14 +43,18 @@
 
     <ItemGroup>
         <!-- App Icon -->
-        <MauiIcon Include="Resources\AppIcon\tierlist.png" ForegroundFile="Resources\AppIcon\tierlist.png" />
+        <MauiIcon Include="Resources\AppIcon\tierlist.png"/>
 
         <!-- Custom Fonts -->
         <MauiFont Include="Resources\Fonts\*" />
 
+		<!-- Splash Screen -->
+		<MauiSplashScreen Include="Resources\AppIcon\tierlist.png" BaseSize="128,128" />
+
         <!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
         <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
     </ItemGroup>
+	
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.20" />

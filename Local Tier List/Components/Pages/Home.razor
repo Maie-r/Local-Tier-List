@@ -12,14 +12,14 @@
 		<div class="row col-sm-4 col-md-3 col-lg-2 mx-2 my-1 d-flex flex-fill flex-wrap">
 			<div class="row p-0 col-12 d-flex flex-fill">
 				<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
-					<h5 class="clickable flex-fill p-1 m-0 text-center rounded bg-primary align-content-center" @onclick="ImportOpen"> Import Tierlists </h5>
+					<h5 class="clickable flex-fill p-1 m-0 text-center rounded btn bg-primary align-content-center" @onclick="ImportOpen"> Import Tierlists </h5>
 				</div>
 			</div>
 		</div>
 		<div class="row col-sm-4 col-md-3 col-lg-2 mx-2 my-1 d-flex flex-fill flex-wrap">
 			<div class="row p-0 col-12 d-flex flex-fill">
 				<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
-					<h5 class="clickable flex-fill p-2 m-0 text-center rounded bg-primary align-content-center" @onclick="ExportAll"> Export All Tierlists </h5>
+					<h5 class="clickable flex-fill p-2 m-0 text-center rounded btn bg-primary align-content-center" @onclick="ExportAll"> Export All Tierlists </h5>
 				</div>
 			</div>
 		</div>
@@ -39,8 +39,8 @@
 				<div class="row col-sm-4 col-md-3 col-lg-2 mx-0 my-1 d-flex flex-fill flex-wrap">
 					<div class="row p-0 col-12 d-flex flex-fill">
 						<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
-							<a class="bg-highlight col-10 text-light text-center justify-content-center p-2 rounded clickable align-content-center" @onclick="() => Select(lists[i])">@lists[i].name</a>
-							<button class="text-light col-2 p-2 ms-1 bg-danger clickable rounded flex-nowrap align-content-center" @onclick="() => YouSure(lists[i])">✖</button>
+							<a class="bg-highlight col-10 text-light btn text-center justify-content-center p-2 rounded clickable align-content-center" @onclick="() => Select(lists[i])">@lists[i].name</a>
+							<button class="text-light col-2 p-2 ms-1 btn bg-danger clickable rounded flex-nowrap align-content-center" @onclick="() => YouSure(lists[i])">✖</button>
 						</div>
 					</div>
 				</div>
@@ -48,42 +48,12 @@
 			<div class="row col-sm-4 col-md-3 col-lg-2 mx-0 my-1 d-flex flex-fill flex-wrap">
 				<div class="row p-0 col-12 d-flex flex-fill">
 					<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
-						<h5 class="clickable flex-fill p-0 m-0 text-center rounded template align-content-center" @onclick="NewTierList"> New Tierlist </h5>
+						<h5 class="clickable flex-fill p-0 m-0 text-center rounded btn template align-content-center" @onclick="NewTierList"> New Tierlist </h5>
 					</div>
 				</div>
 			</div>
 		</div>
 	</div>
-	@if (yousure)
-	{
-		<div class="maiedal d-flex flex-column text-center justify-content-center">
-			<div class="p-2 darken-95 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-6">
-				<p> Are you sure you want to permanently remove this tierlist? All tiers and items registered within will be deleted! </p>
-				<div class="d-flex flex-row flex-wrap mx-auto">
-					<button class="mx-2 text-light" @onclick="YouSure">No</button>
-					<button class="mx-2 text-danger" @onclick="Delete">Yes, remove it and all items within</button>
-				</div>
-			</div>
-		</div>
-
-	}
-	@if (ImportMenu)
-	{
-		<div class="maiedal d-flex flex-column text-center justify-content-center">
-			<div class="p-2 darken-95 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-6">
-				<p> Paste below the JSON string of the Tierlist(s) you want to import! </p>
-                <textarea class="font-monospace bg-dark text-light col-12 mb-2" style="height:200px;" @bind="importString"></textarea>
-				<div>
-					<p class="text-danger">@importErr</p>
-				</div>
-				<div class="d-flex flex-row flex-wrap mx-auto">
-					<button class="mx-2 text-light rounded p-2" @onclick="() => ImportMenu = false">Cancel</button>
-					<button class="mx-2 bg-highlight rounded p-2 text-light" @onclick="ImportTierLists">Import</button>
-				</div>
-			</div>
-		</div>
-
-	}
 	@if (selected != null)
 	{
 		<div class="form-check">
@@ -105,6 +75,38 @@
 			</label>
 		</div>
 		<TierListComp selected="selected" tl="TierService.tl" showcase="showcase" minimal="minimal" NoImg="NoImg"/>
+	}
+
+	<!-- -- -- -- -- -- -- MODALS -- -- -- -- -- -- -- -->
+	@if (yousure)
+	{
+		<div class="maiedal d-flex flex-column text-center justify-content-center">
+			<div class="p-2 darken-95 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-6">
+				<p> Are you sure you want to permanently remove this tierlist? All tiers and items registered within will be deleted! </p>
+				<div class="d-flex flex-row flex-wrap mx-auto">
+					<button class="mx-2 btn text-light" @onclick="YouSure">No</button>
+					<button class="mx-2 btn text-danger" @onclick="Delete">Yes, remove it and all items within</button>
+				</div>
+			</div>
+		</div>
+
+	}
+	@if (ImportMenu)
+	{
+		<div class="maiedal d-flex flex-column text-center justify-content-center">
+			<div class="p-2 darken-95 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-12 col-md-6">
+				<p> Paste below the JSON string of the Tierlist(s) you want to import! </p>
+				<textarea class="font-monospace bg-dark text-light col-12 mb-2" style="height:200px;" @bind="importString"></textarea>
+				<div>
+					<p class="text-danger">@importErr</p>
+				</div>
+				<div class="d-flex flex-row flex-wrap mx-auto">
+					<button class="mx-2 border-1 border-white text-light rounded btn p-2" @onclick="() => ImportMenu = false">Cancel</button>
+					<button class="mx-2 bg-highlight rounded btn p-2 text-light" @onclick="ImportTierLists">Import</button>
+				</div>
+			</div>
+		</div>
+
 	}
 </div>
 
