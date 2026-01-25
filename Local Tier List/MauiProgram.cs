@@ -1,5 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
-using Local_Tier_List.Data;
+﻿using Local_Tier_List.Data;
+using Microsoft.Extensions.Logging;
+using MudBlazor;
 using MudBlazor.Services;
 
 namespace Local_Tier_List
@@ -18,6 +19,14 @@ namespace Local_Tier_List
 
             builder.Services.AddMauiBlazorWebView();
             builder.Services.AddMudServices();
+
+            builder.Services.AddMudServices(config =>
+            {
+                config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomRight;
+                config.SnackbarConfiguration.HideTransitionDuration = 100;
+                config.SnackbarConfiguration.ShowTransitionDuration = 100;
+                config.SnackbarConfiguration.VisibleStateDuration = 3000; // 3 seconds
+            });
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();

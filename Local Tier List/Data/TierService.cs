@@ -31,9 +31,9 @@ namespace Local_Tier_List.Data
             } 
         }
 
-        public static void SaveAll()
+        public static async Task SaveAll()
         {
-            _tierlister.SaveAll();
+            await _tierlister.SaveAll();
         }
 
         public static List<TierList> Import(string ImportJson)

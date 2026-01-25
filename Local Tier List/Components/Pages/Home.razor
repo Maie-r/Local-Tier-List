@@ -4,6 +4,7 @@
 @using Microsoft.Maui.ApplicationModel
 @inject ILogger<Home> Logger
 @inject IJSRuntime JS
+@inject ISnackbar Snackbar
 <link href="css/charactercolor.css" rel="stylesheet" />
 
 <div class="m-md-1 p-md-1 m-lg-4 p-lg-4 overflow-hidden">
@@ -56,25 +57,35 @@
 	</div>
 	@if (selected != null)
 	{
-		<div class="form-check">
-			<input class="form-check-input" type="checkbox" value="" id="showcaseform" @onchange="() => Toggle(ref showcase)">
-			<label class="form-check-label" for="showcaseform">
-				Showcase Mode
-			</label>
+		<h5 class="ms-4">Display Settings:</h5>
+		<div class="d-flex flex-row gap-3 p-2 darken-25 rounded ms-2">
+			<div class="form-check form-switch">
+				<input class="form-check-input" type="checkbox" id="showcaseform"
+					   @onchange="() => Toggle(ref showcase)">
+				<label class="form-check-label" for="showcaseform">
+					Showcase Mode
+				</label>
+			</div>
+
+			<div class="form-check form-switch">
+				<input class="form-check-input" type="checkbox" id="minimalform"
+					   @onchange="() => Toggle(ref minimal)">
+				<label class="form-check-label" for="minimalform">
+					Minimal Mode
+				</label>
+			</div>
+
+			<div class="form-check form-switch">
+				<input class="form-check-input" type="checkbox" id="textform"
+					   @onchange="() => Toggle(ref NoImg)">
+				<label class="form-check-label" for="textform">
+					Text Only
+				</label>
+			</div>
 		</div>
-		<div class="form-check">
-			<input class="form-check-input" type="checkbox" value="" id="minimalform" @onchange="() => Toggle(ref minimal)">
-			<label class="form-check-label" for="minimalform">
-				Minimal Mode
-			</label>
-		</div>
-		<div class="form-check">
-			<input class="form-check-input" type="checkbox" value="" id="textform" @onchange="() => Toggle(ref NoImg)">
-			<label class="form-check-label" for="textform">
-				Text Only
-			</label>
-		</div>
-		<TierListComp selected="selected" tl="TierService.tl" showcase="showcase" minimal="minimal" NoImg="NoImg"/>
+
+		<TierListComp selected="selected" tl="TierService.tl" showcase="showcase" minimal="minimal" NoImg="NoImg"
+		OnExport="@(() => SnackAlert("Exported Tierlist copied to clipboard"))" OnError="@(new Action<string>(e => SnackError(e)))"/>
 	}
 
 	<!-- -- -- -- -- -- -- MODALS -- -- -- -- -- -- -- -->
@@ -100,6 +111,13 @@
 				<div>
 					<p class="text-danger">@importErr</p>
 				</div>
+				<div class="form-check form-switch text-start mx-3 mb-3">
+					<input class="form-check-input" type="checkbox" id="ireplace"
+						   @onchange="() => Toggle(ref ImportReplace)">
+					<label class="form-check-label" for="ireplace">
+						Replace current Tierlists
+					</label>
+				</div>
 				<div class="d-flex flex-row flex-wrap mx-auto">
 					<button class="mx-2 border-1 border-white text-light rounded btn p-2" @onclick="() => ImportMenu = false">Cancel</button>
 					<button class="mx-2 bg-highlight rounded btn p-2 text-light" @onclick="ImportTierLists">Import</button>
@@ -121,9 +139,7 @@
 	string importString = "";
 	string importErr = "";
 
-	bool showcase, minimal, NoImg, ImportMenu;
-
-	bool yousure = false;
+	bool showcase, minimal, NoImg, yousure, ImportMenu, ImportReplace;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -183,12 +199,22 @@
 		ImportMenu = true;
 	}
 
+	void SnackAlert(string message)
+	{
+		Snackbar.Add(message, Severity.Info);
+	}
+	void SnackError(string message)
+	{
+		Snackbar.Add(message, Severity.Error);
+	}
+
 	async Task ExportAll()
 	{
 		var json = TierService.tl?.ExportJson() ?? string.Empty;
 		if (string.IsNullOrEmpty(json))
 		{
 			Logger.LogWarning("ExportAll: no JSON produced from TierService.tl.ExportJson()");
+            SnackError("No TierLists to export.");
 			return;
 		}
 
@@ -198,10 +224,11 @@
 			// Use native MAUI clipboard when running as a MAUI app (Android, Windows, iOS, MacCatalyst).
 			await Clipboard.SetTextAsync(json);
 			#else
-			// Fallback for browser/web: use navigator.clipboard via JS interop.
-			await JS.InvokeVoidAsync("navigator.clipboard.writeText", json);
+	// Fallback for browser/web: use navigator.clipboard via JS interop.
+	await JS.InvokeVoidAsync("navigator.clipboard.writeText", json);
 			#endif
 			Logger.LogInformation("Exported JSON copied to clipboard.");
+			SnackAlert("TierLists Data copied to clipboard.");
 		}
 		catch (Exception ex)
 		{
@@ -211,10 +238,12 @@
 			{
 				await JS.InvokeVoidAsync("navigator.clipboard.writeText", json);
 				Logger.LogInformation("Fallback: exported JSON copied to clipboard via JS.");
+                SnackAlert("TierLists Data copied to clipboard.");
 			}
 			catch (Exception jsEx)
 			{
 				Logger.LogError(jsEx, "Fallback copy to clipboard via JS also failed.");
+                SnackError("Failed to copy TierLists Data to clipboard.");
 			}
 		}
 	}
@@ -228,6 +257,10 @@
 				var imported = TierService.Import(importString);
 				if (imported != null && imported.Count > 0)
 				{
+					if (ImportReplace)
+					{
+						TierService.TierLists.Clear();
+                    }
 					foreach (var tl in imported)
 					{
 						TierService.TierLists.Add(tl);
