@@ -37,6 +37,7 @@
 			@for (int local = 0; local < lists.Count; local++)
 			{
 				int i = local;
+				
 				<div class="row col-sm-4 col-md-3 col-lg-2 mx-0 my-1 d-flex flex-fill flex-wrap">
 					<div class="row p-0 col-12 d-flex flex-fill">
 						<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
@@ -151,7 +152,7 @@
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
-		StateHasChanged();
+		//StateHasChanged();
 	}
 
 	void Select(TierList l)
@@ -248,7 +249,7 @@
 		}
 	}
 
-	void ImportTierLists()
+	async Task ImportTierLists()
 	{
 		if (!String.IsNullOrEmpty(importString))
 		{
@@ -265,7 +266,7 @@
 					{
 						TierService.TierLists.Add(tl);
 					}
-					TierService.SaveAll();
+					await TierService.SaveAll();
 					lists = TierService.TierLists;
 					importErr = "";
 					ImportMenu = false;
@@ -287,7 +288,7 @@
 		t = !t;
 	}
 
-	void Delete()
+	async Task Delete()
 	{
 		if (selected == selected2)
 		{
@@ -295,7 +296,7 @@
 		}
 		if (selected2 == null) return;
 		TierService.TierLists.Remove(selected2);
-		TierService.SaveAll();
+		await TierService.SaveAll();
 		yousure = false;
 	}
 }
