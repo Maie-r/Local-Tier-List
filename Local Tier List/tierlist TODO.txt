@@ -1,0 +1,35 @@
+css it out kinda, not too elaborate
+
+Find some damn way to center the tier text without breaking everyrthing
+
+Add way to drag drop Tiers in TierEdit
+
+Add support for Sorting tierlists into folders, with custom colors
+
+Add support for Tags/Categories and Additional Text (description) for Tier Items (the former for searching specific groups, the latter to add notes to your reasoning for putting it there)
+
+Fallback Unloaded images to their text versions
+
+Optimize Mobile performance
+
+DONE ------------
+
+(!) Be able to drag items across itself and other tiers (animation isn't needed)
+
+(!) make tiers show even when empty
+
+(!) fix not being able to drag and drop to empty tier
+
+(!) Add tooltips for every item, showing its name when hovered.
+
+(!) Checkboxes for minimal mode (half the space used) and showcase mode (hide ADD boxes)
+
+(!) Export and Import Tierlists (into json)
+
+(!) Use DragDropApi in Local Tier List, Seperate it into a "MaieUtils" project (if ondragleave works)
+
+(!) Make Mobile Compatible
+{
+	(!) UI
+	(!) Drag and Drop
+}
