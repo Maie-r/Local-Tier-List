@@ -6,11 +6,11 @@ Add way to drag drop Tiers in TierEdit
 
 Add support for Sorting tierlists into folders, with custom colors
 
-Fallback Unloaded images to their text versions
-
 Optimize Mobile performance
 
 DONE ------------
+
+(!) Fallback Unloaded images to their text versions
 
 (!) Add support for Tags/Categories and Additional Text (description) for Tier Items (the former for searching specific groups, the latter to add notes to your reasoning for putting it there)
 
