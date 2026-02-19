@@ -1,18 +1,18 @@
 css it out kinda, not too elaborate
 
-Find some damn way to center the tier text without breaking everyrthing
+Find some damn way to center the tier text without breaking everyrthing (!?)
 
 Add way to drag drop Tiers in TierEdit
 
 Add support for Sorting tierlists into folders, with custom colors
-
-Add support for Tags/Categories and Additional Text (description) for Tier Items (the former for searching specific groups, the latter to add notes to your reasoning for putting it there)
 
 Fallback Unloaded images to their text versions
 
 Optimize Mobile performance
 
 DONE ------------
+
+(!) Add support for Tags/Categories and Additional Text (description) for Tier Items (the former for searching specific groups, the latter to add notes to your reasoning for putting it there)
 
 (!) Be able to drag items across itself and other tiers (animation isn't needed)
 
