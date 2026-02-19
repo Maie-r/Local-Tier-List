@@ -1,16 +1,30 @@
+Overall Status: Main requisites functional on Desktop and Android, still could use some QA to find unhandled errors. 
+Remaining work is improvement only with no deadlines
+
 css it out kinda, not too elaborate
+{
+	Make Tierlist headers (name input, export, search) prettier
+	Make TierList.. List prettier
+}
+
+Add formatting support for Tier Item Notes
 
 Find some damn way to center the tier text without breaking everyrthing (!?)
 
 Add way to drag drop Tiers in TierEdit
 
-Add support for Sorting tierlists into folders, with custom colors
-
-Fallback Unloaded images to their text versions
+Add support for Sorting tierlists into folders, with custom colors (maybe using the Content from maiehobbies? but not necessarily)
 
 Optimize Mobile performance
+{
+	Drag Ghost operation
+	Tier Edit open delay
+	Slight scrolling lag on showcase mode (due to popups)
+}
 
 DONE ------------
+
+(!) Fallback Unloaded images to their text versions
 
 (!) Add support for Tags/Categories and Additional Text (description) for Tier Items (the former for searching specific groups, the latter to add notes to your reasoning for putting it there)
 
