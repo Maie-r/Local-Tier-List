@@ -1,6 +1,12 @@
 Overall Status: Main requisites functional on Desktop and Android, still could use some QA to find unhandled errors. 
 Remaining work is improvement only with no deadlines
 
+Github:
+{
+	Make an actual Readme, with images of both devices.
+	Add Desktop and Android Releases.
+}
+
 css it out kinda, not too elaborate
 {
 	Make Tierlist headers (name input, export, search) prettier
