@@ -17,8 +17,6 @@ Add formatting support for Tier Item Notes
 
 Find some damn way to center the tier text without breaking everyrthing (!?)
 
-Add way to drag drop Tiers in TierEdit
-
 Add support for Sorting tierlists into folders, with custom colors (maybe using the Content from maiehobbies? but not necessarily)
 
 Optimize Mobile performance
@@ -53,3 +51,5 @@ DONE ------------
 	(!) UI
 	(!) Drag and Drop
 }
+
+(!) Add way to rearrange Tiers in TierEdit
