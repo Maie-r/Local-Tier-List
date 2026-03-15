@@ -86,10 +86,18 @@
 		</div>
 
 		<TierListComp selected="selected" tl="TierService.tl" showcase="showcase" minimal="minimal" NoImg="NoImg"
-		OnExport="@(() => SnackAlert("Exported Tierlist copied to clipboard"))" OnError="@(new Action<string>(e => SnackError(e)))"/>
+		OnExport="@(() => SnackAlert("Exported Tierlist copied to clipboard"))" OnError="@(new Action<string>(e => SnackError(e)))"
+		OnLoaded="@(async (e) => await UILoaded(e))" OnLoadingStart="@(async (e) => await UILoading(e))"/>
 	}
 
 	<!-- -- -- -- -- -- -- MODALS -- -- -- -- -- -- -- -->
+	@if (Loading)
+	{
+		<div class="LoadingDisplay d-flex darken-50 align-content-center align-items-center justify-content-center mx-auto">
+			<h5 class="d-flex col-12 align-items-center align-content-center mx-auto justify-content-center">@LoadingMessage</h5>
+		</div>
+	}
+
 	@if (yousure)
 	{
 		<div class="maiedal d-flex flex-column text-center justify-content-center">
@@ -142,20 +150,23 @@
 
 	bool showcase, minimal, NoImg, yousure, ImportMenu, ImportReplace;
 
+	bool Loading = false;
+	string LoadingMessage = "Loading...";
+
 	protected override async Task OnInitializedAsync()
 	{
 		lists = TierService.TierLists;
 		if (lists == null)
-			lists = new List<TierList>();		
+			lists = new List<TierList>();	
 
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
-		//StateHasChanged();
+		if (firstRender) await UILoaded();
 	}
 
-	void Select(TierList l)
+	async Task Select(TierList l)
 	{
 		if (l == selected)
 		{
@@ -163,6 +174,7 @@
 		}
 		else
 		{
+			await UILoading("Loading Tierlist...");
 			selected = l;
 		}
 	}
@@ -198,6 +210,30 @@
 	void ImportOpen()
 	{
 		ImportMenu = true;
+	}
+	async Task UILoaded()
+	{
+		await UILoaded("");
+	}
+
+	async Task UILoading()
+	{
+        await UILoading("Loading...");
+	}
+
+	async Task UILoaded(string? message)
+	{
+		//Logger.LogInformation(message);
+		//Loading = false;
+		//LoadingMessage = "";
+		StateHasChanged();
+	}
+
+	async Task UILoading(string? message)
+	{
+		//Loading = true;
+		//LoadingMessage = message;
+		StateHasChanged();
 	}
 
 	void SnackAlert(string message)

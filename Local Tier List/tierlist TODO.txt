@@ -7,6 +7,12 @@ Github:
 	Add Desktop and Android Releases.
 }
 
+Local Image Picking:
+{
+	Windows
+	Mobile (Gallery and camera)
+}
+
 css it out kinda, not too elaborate
 {
 	Make Tierlist headers (name input, export, search) prettier

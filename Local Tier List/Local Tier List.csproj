@@ -43,7 +43,7 @@
 
     <ItemGroup>
         <!-- App Icon -->
-        <MauiIcon Include="Resources\AppIcon\tierlist.png"/>
+        <MauiIcon Include="Resources\AppIcon\tierlist.png" />
 
         <!-- Custom Fonts -->
         <MauiFont Include="Resources\Fonts\*" />
@@ -53,6 +53,10 @@
 
         <!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
         <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <AndroidResource Remove="Platforms\Android\Resources\values\ids.xml" />
     </ItemGroup>
 	
 
