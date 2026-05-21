@@ -114,7 +114,7 @@
 	@if (ImportMenu)
 	{
 		<div class="maiedal d-flex flex-column text-center justify-content-center">
-			<div class="p-2 darken-95 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-12 col-md-6">
+			<div class="p-4 darken-85 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
 				<p> Paste below the JSON string of the Tierlist(s) you want to import! </p>
 				<textarea class="font-monospace bg-dark text-light col-12 mb-2" style="height:200px;" @bind="importString"></textarea>
 				<div>
@@ -218,7 +218,7 @@
 
 	async Task UILoading()
 	{
-        await UILoading("Loading...");
+		await UILoading("Loading...");
 	}
 
 	async Task UILoaded(string? message)
@@ -251,7 +251,7 @@
 		if (string.IsNullOrEmpty(json))
 		{
 			Logger.LogWarning("ExportAll: no JSON produced from TierService.tl.ExportJson()");
-            SnackError("No TierLists to export.");
+			SnackError("No TierLists to export.");
 			return;
 		}
 
@@ -275,12 +275,12 @@
 			{
 				await JS.InvokeVoidAsync("navigator.clipboard.writeText", json);
 				Logger.LogInformation("Fallback: exported JSON copied to clipboard via JS.");
-                SnackAlert("TierLists Data copied to clipboard.");
+				SnackAlert("TierLists Data copied to clipboard.");
 			}
 			catch (Exception jsEx)
 			{
 				Logger.LogError(jsEx, "Fallback copy to clipboard via JS also failed.");
-                SnackError("Failed to copy TierLists Data to clipboard.");
+				SnackError("Failed to copy TierLists Data to clipboard.");
 			}
 		}
 	}
@@ -297,7 +297,7 @@
 					if (ImportReplace)
 					{
 						TierService.TierLists.Clear();
-                    }
+					}
 					foreach (var tl in imported)
 					{
 						TierService.TierLists.Add(tl);
@@ -322,6 +322,7 @@
 	void Toggle(ref bool t)
 	{
 		t = !t;
+		StateHasChanged();
 	}
 
 	async Task Delete()
