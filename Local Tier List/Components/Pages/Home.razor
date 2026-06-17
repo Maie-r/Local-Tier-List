@@ -2,31 +2,21 @@
 @using System.Text.Json
 @using Microsoft.Extensions.Logging
 @using Microsoft.Maui.ApplicationModel
+@using System.Diagnostics
 @inject ILogger<Home> Logger
 @inject IJSRuntime JS
 @inject ISnackbar Snackbar
 <link href="css/charactercolor.css" rel="stylesheet" />
 
 <div class="m-md-1 p-md-1 m-lg-4 p-lg-4 overflow-hidden">
-	<h1 class="d-flex text-light mx-auto justify-content-center">Local Tier List Maker</h1>
-	<div class="d-flex col-12 col-md-6">
-		<div class="row col-sm-4 col-md-3 col-lg-2 mx-2 my-1 d-flex flex-fill flex-wrap">
-			<div class="row p-0 col-12 d-flex flex-fill">
-				<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
-					<h5 class="clickable flex-fill p-1 m-0 text-center rounded btn bg-primary align-content-center" @onclick="ImportOpen"> Import Tierlists </h5>
-				</div>
-			</div>
-		</div>
-		<div class="row col-sm-4 col-md-3 col-lg-2 mx-2 my-1 d-flex flex-fill flex-wrap">
-			<div class="row p-0 col-12 d-flex flex-fill">
-				<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
-					<h5 class="clickable flex-fill p-2 m-0 text-center rounded btn bg-primary align-content-center" @onclick="ExportAll"> Export All Tierlists </h5>
-				</div>
-			</div>
-		</div>
-	</div>
+	<h1 class="d-flex text-light mx-auto justify-content-center" style="font-weight: 600">Local Tier List Maker</h1>
 	<div class="row col-12 d-flex flex-column text-light m-2">
-		<h5> Tier Lists: </h5>
+		<h3 style="font-weight: 500"> Tier Lists: </h3>
+		@if (!mobile){
+				<button class="m-2 ms-4 col-1 bg-highlight rounded p-1" @onclick="() => OpenDataFolder()">
+				<MudIcon Icon="@Icons.Material.Filled.Folder" Title="Data Folder"/>
+				</button>
+		}
 		@if (lists!.Count <= 0)
 		{
 			<div class="col-sm-12 col-lg-4 mx-2 flex-column justify-content-center d-flex flex-fill">
@@ -51,6 +41,29 @@
 				<div class="row p-0 col-12 d-flex flex-fill">
 					<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
 						<h5 class="clickable flex-fill p-0 m-0 text-center rounded btn template align-content-center" @onclick="NewTierList"> New Tierlist </h5>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="d-flex mx-2 my-2 col-6 col-md-4">
+			<div class="row col-sm-3 col-md-2 col-lg-1 mx-2 my-1 d-flex flex-fill flex-wrap">
+				<div class="row p-0 col-12 d-flex flex-fill">
+					<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
+						<h5 class="clickable flex-fill p-1 m-0 text-center rounded btn bg-primary align-content-center" @onclick="@(() => OpenModal("Import"))"> <MudIcon Icon="@Icons.Material.Filled.Download" Title="Import" /> Import Tierlists </h5>
+					</div>
+				</div>
+			</div>
+			<div class="row col-sm-3 col-md-2 col-lg-1 mx-2 my-1 d-flex flex-fill flex-wrap">
+				<div class="row p-0 col-12 d-flex flex-fill">
+					<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
+						<h5 class="clickable flex-fill p-2 m-0 text-center rounded btn bg-primary align-content-center" @onclick="ExportAll"> <MudIcon Icon="@Icons.Material.Filled.Upload" Title="Export" /> Export All Tierlists </h5>
+					</div>
+				</div>
+			</div>
+			<div class="row col-sm-3 col-md-2 col-lg-1 mx-2 my-1 d-flex flex-fill flex-wrap">
+				<div class="row p-0 col-12 d-flex flex-fill">
+					<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
+						<h5 class="clickable flex-fill p-2 m-0 text-center rounded btn bg-primary align-content-center" @onclick="@(() => OpenModal("Merge"))"> MERGE TWO (DEBUG) </h5>
 					</div>
 				</div>
 			</div>
@@ -133,7 +146,25 @@
 				</div>
 			</div>
 		</div>
-
+	}
+	@if (MergeMenu)
+	{
+		<div class="maiedal d-flex flex-column text-center justify-content-center">
+			<div class="p-4 darken-85 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
+				<p> Paste below the JSON string of the Tierlist(s) you want to merge! </p><br />
+				<p> Current: </p>
+				<textarea class="font-monospace bg-dark text-light col-12 mb-2" style="height:200px;" @bind="merge1String"></textarea>
+				<p> Incoming: </p>
+				<textarea class="font-monospace bg-dark text-light col-12 mb-2" style="height:200px;" @bind="merge2String"></textarea>
+				<div>
+					<p class="text-danger">@mergeErr</p>
+				</div>
+				<div class="d-flex flex-row flex-wrap mx-auto">
+					<button class="mx-2 border-1 border-white text-light rounded btn p-2" @onclick="() => MergeMenu = false">Cancel</button>
+					<button class="mx-2 bg-highlight rounded btn p-2 text-light" @onclick="MergeTierLists">Merge</button>
+				</div>
+			</div>
+		</div>
 	}
 </div>
 
@@ -146,15 +177,21 @@
 	TierList? selected2;
 
 	string importString = "";
+	string merge1String = "";
+	string merge2String = "";
 	string importErr = "";
+	string mergeErr = "";
 
-	bool showcase, minimal, NoImg, yousure, ImportMenu, ImportReplace;
+	bool showcase, minimal, NoImg, yousure, ImportMenu, ImportReplace, MergeMenu;
 
 	bool Loading = false;
 	string LoadingMessage = "Loading...";
 
+	bool mobile;
+
 	protected override async Task OnInitializedAsync()
 	{
+		mobile = OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
 		lists = TierService.TierLists;
 		if (lists == null)
 			lists = new List<TierList>();	
@@ -207,10 +244,24 @@
 		}
 	}
 
-	void ImportOpen()
+	void OpenModal(string type)
 	{
-		ImportMenu = true;
+		switch (type)
+		{
+			case "Import":
+				ImportMenu = true;
+				break;
+			case "Merge":
+				MergeMenu = true;
+				break;
+		}
 	}
+
+	void OpenDataFolder()
+	{
+		Process.Start("explorer.exe", TierLister.GetFolder());
+	}
+
 	async Task UILoaded()
 	{
 		await UILoaded("");
@@ -258,11 +309,11 @@
 		try
 		{
 			#if ANDROID || WINDOWS || IOS || MACCATALYST
-			// Use native MAUI clipboard when running as a MAUI app (Android, Windows, iOS, MacCatalyst).
-			await Clipboard.SetTextAsync(json);
+	// Use native MAUI clipboard when running as a MAUI app (Android, Windows, iOS, MacCatalyst).
+	await Clipboard.SetTextAsync(json);
 			#else
-	// Fallback for browser/web: use navigator.clipboard via JS interop.
-	await JS.InvokeVoidAsync("navigator.clipboard.writeText", json);
+			// Fallback for browser/web: use navigator.clipboard via JS interop.
+			await JS.InvokeVoidAsync("navigator.clipboard.writeText", json);
 			#endif
 			Logger.LogInformation("Exported JSON copied to clipboard.");
 			SnackAlert("TierLists Data copied to clipboard.");
@@ -317,6 +368,18 @@
 				importErr = e.Message;
 			}
 		}
+	}
+
+	async Task MergeTierLists()
+	{
+		if (!String.IsNullOrEmpty(merge1String) && !String.IsNullOrEmpty(merge2String))
+		{
+			var t1 = TierService.Import(merge1String);
+			var t2 = TierService.Import(merge2String);
+			var t3 = TLMerger.MergeTierLists(MergeBehaviourTable.MergeIntoCurrent, t1[0], t2[0]);
+			TierService.TierLists.Add(t3);
+		}
+		else mergeErr = "Please fill both fields";
 	}
 
 	void Toggle(ref bool t)
