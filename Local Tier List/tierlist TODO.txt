@@ -31,7 +31,7 @@ Optimize Mobile performance
 {
 	Drag Ghost operation
 	Tier Edit open delay
-	Slight scrolling lag on showcase mode (due to popups)
+	Slight scrolling lag on showcase mode (due to popups) (!)
 }
 
 Tierlist Merging:
