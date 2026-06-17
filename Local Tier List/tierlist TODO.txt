@@ -34,7 +34,19 @@ Optimize Mobile performance
 	Slight scrolling lag on showcase mode (due to popups)
 }
 
+Tierlist Merging:
+{
+	Merge two into one: 
+	{
+		Merge as update (incoming into current) !
+		Merge as datakeep (current into incoming)
+		Merge smartly (last changed is kept unless empty)
+	}
+}
+
 DONE ------------
+
+(!) Advanced search field
 
 (!) Fallback Unloaded images to their text versions
 
