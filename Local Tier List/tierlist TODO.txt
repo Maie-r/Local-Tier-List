@@ -36,11 +36,12 @@ Optimize Mobile performance
 
 Tierlist Merging:
 {
+	Add an actually good interface for it
 	Merge two into one: 
 	{
-		Merge as update (incoming into current) !
-		Merge as datakeep (current into incoming)
-		Merge smartly (last changed is kept unless empty)
+		Merge as update (incoming into current) ! (!)
+		Merge as datakeep (current into incoming) (not needed)
+		Merge smartly (last changed is kept unless empty) (!)
 	}
 }
 

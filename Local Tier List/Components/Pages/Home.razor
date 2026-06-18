@@ -376,7 +376,7 @@
 		{
 			var t1 = TierService.Import(merge1String);
 			var t2 = TierService.Import(merge2String);
-			var t3 = TLMerger.MergeTierLists(MergeBehaviourTable.MergeIntoCurrent, t1[0], t2[0]);
+			var t3 = TLMerger.MergeTierLists(MergeBehaviourTable.SmartMerge, t1[0], t2[0]);
 			TierService.TierLists.Add(t3);
 		}
 		else mergeErr = "Please fill both fields";
