@@ -1,7 +1,11 @@
-.bg-highlight {  background-color: rgb(160, 80, 220); }
+:root {
+    --highlight-color: rgb(160, 80, 220);
+}
+
+.bg-highlight {  background-color: var(--highlight-color); }
 .btn-unselect { background-color: rgba(160, 80, 220, 0.5); }
 .btn-selected {
-    background-color: rgb(160, 80, 220);
+    background-color: var(--highlight-color);
     border: solid;
     border-width: 0.1vw;
     border-spacing: 0.5vw;

@@ -31,7 +31,11 @@
 				<div class="row col-sm-4 col-md-3 col-lg-2 mx-0 my-1 d-flex flex-wrap">
 					<div class="row p-0 col-12 d-flex flex-fill">
 						<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
-							<a class="bg-highlight col-10 text-light btn text-center justify-content-center p-2 rounded clickable align-content-center" @onclick="() => Select(lists[i])">@lists[i].name</a>
+							<a class="col-10 btn text-center justify-content-center p-2 rounded clickable align-content-center" 
+								style="background-color: @(String.IsNullOrEmpty(lists[i].color) ? "var(--highlight-color)" : lists[i].color); 
+									   color: @(String.IsNullOrEmpty(lists[i].color) ? "white" : GlobalStyleFunctions.GetMostReadableTextColor(lists[i].color))"
+								@onclick="() => Select(lists[i])"> @lists[i].name
+							</a>
 							<button class="text-light col-2 p-2 ms-1 btn bg-danger clickable rounded flex-nowrap align-content-center" @onclick="() => YouSure(lists[i])">✖</button>
 						</div>
 					</div>
@@ -189,6 +193,7 @@
 
 	bool mobile;
 
+	// -------- GENERAL FUNCTIONS
 	protected override async Task OnInitializedAsync()
 	{
 		mobile = OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
@@ -203,6 +208,12 @@
 		if (firstRender) await UILoaded();
 	}
 
+	void OpenDataFolder()
+	{
+		Process.Start("explorer.exe", TierLister.GetMainFolder());
+	}
+
+	// -------- TIERLIST MANAGEMENT
 	async Task Select(TierList l)
 	{
 		if (l == selected)
@@ -222,6 +233,19 @@
 		Select(TierService.TierLists.Last());
 	}
 
+	async Task Delete()
+	{
+		if (selected == selected2)
+		{
+			selected = null;
+		}
+		if (selected2 == null) return;
+		TierService.TierLists.Remove(selected2);
+		await TierService.SaveAll();
+		yousure = false;
+	}
+
+	// -------- MODAL HANDLING
 	void YouSure(TierList l)
 	{
 		if (yousure)
@@ -243,7 +267,6 @@
 			selected2 = null;
 		}
 	}
-
 	void OpenModal(string type)
 	{
 		switch (type)
@@ -256,46 +279,13 @@
 				break;
 		}
 	}
-
-	void OpenDataFolder()
+	void Toggle(ref bool t)
 	{
-		Process.Start("explorer.exe", TierLister.GetFolder());
-	}
-
-	async Task UILoaded()
-	{
-		await UILoaded("");
-	}
-
-	async Task UILoading()
-	{
-		await UILoading("Loading...");
-	}
-
-	async Task UILoaded(string? message)
-	{
-		//Logger.LogInformation(message);
-		//Loading = false;
-		//LoadingMessage = "";
+		t = !t;
 		StateHasChanged();
 	}
 
-	async Task UILoading(string? message)
-	{
-		//Loading = true;
-		//LoadingMessage = message;
-		StateHasChanged();
-	}
-
-	void SnackAlert(string message)
-	{
-		Snackbar.Add(message, Severity.Info);
-	}
-	void SnackError(string message)
-	{
-		Snackbar.Add(message, Severity.Error);
-	}
-
+	// -------- IMPORT, EXPORT, MERGE
 	async Task ExportAll()
 	{
 		var json = TierService.tl?.ExportJson() ?? string.Empty;
@@ -308,13 +298,13 @@
 
 		try
 		{
-			#if ANDROID || WINDOWS || IOS || MACCATALYST
+#if ANDROID || WINDOWS || IOS || MACCATALYST
 	// Use native MAUI clipboard when running as a MAUI app (Android, Windows, iOS, MacCatalyst).
 	await Clipboard.SetTextAsync(json);
-			#else
+#else
 			// Fallback for browser/web: use navigator.clipboard via JS interop.
 			await JS.InvokeVoidAsync("navigator.clipboard.writeText", json);
-			#endif
+#endif
 			Logger.LogInformation("Exported JSON copied to clipboard.");
 			SnackAlert("TierLists Data copied to clipboard.");
 		}
@@ -382,21 +372,39 @@
 		else mergeErr = "Please fill both fields";
 	}
 
-	void Toggle(ref bool t)
+	// -------- LOADING HANDLING
+	async Task UILoaded()
 	{
-		t = !t;
+		await UILoaded("");
+	}
+
+	async Task UILoading()
+	{
+		await UILoading("Loading...");
+	}
+
+	async Task UILoaded(string? message)
+	{
+		//Logger.LogInformation(message);
+		//Loading = false;
+		//LoadingMessage = "";
 		StateHasChanged();
 	}
 
-	async Task Delete()
+	async Task UILoading(string? message)
 	{
-		if (selected == selected2)
-		{
-			selected = null;
-		}
-		if (selected2 == null) return;
-		TierService.TierLists.Remove(selected2);
-		await TierService.SaveAll();
-		yousure = false;
+		//Loading = true;
+		//LoadingMessage = message;
+		StateHasChanged();
 	}
+
+	void SnackAlert(string message)
+	{
+		Snackbar.Add(message, Severity.Info);
+	}
+	void SnackError(string message)
+	{
+		Snackbar.Add(message, Severity.Error);
+	}
+
 }
