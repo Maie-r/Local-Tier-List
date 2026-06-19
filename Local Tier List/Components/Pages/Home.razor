@@ -23,7 +23,7 @@
 				<h5> There are no saved TierLists, create one with the "New TierList" button!. </h5>
 			</div>
 		}
-		<div class="row mx-1 flex-row justify-content-center col-12 flex-fill flex-wrap d-flex">
+		<div class="row mx-1 flex-row justify-content-start col-12 flex-fill flex-wrap d-flex">
 			@for (int local = 0; local < lists.Count; local++)
 			{
 				int i = local;
@@ -104,7 +104,8 @@
 
 		<TierListComp selected="selected" tl="TierService.tl" showcase="showcase" minimal="minimal" NoImg="NoImg"
 		OnExport="@(() => SnackAlert("Exported Tierlist copied to clipboard"))" OnError="@(new Action<string>(e => SnackError(e)))"
-		OnLoaded="@(async (e) => await UILoaded(e))" OnLoadingStart="@(async (e) => await UILoading(e))"/>
+		OnLoaded="@(async (e) => await UILoaded(e))" OnLoadingStart="@(async (e) => await UILoading(e))"
+		OnSave="@(async () => await Save())"/>
 	}
 
 	<!-- -- -- -- -- -- -- MODALS -- -- -- -- -- -- -- -->
@@ -193,13 +194,15 @@
 
 	bool mobile;
 
+	CancellationTokenSource? _saveCts;
+
 	// -------- GENERAL FUNCTIONS
 	protected override async Task OnInitializedAsync()
 	{
 		mobile = OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
-		lists = TierService.TierLists;
+		lists = TierService.TierLists; // yes this loads TierLister too
 		if (lists == null)
-			lists = new List<TierList>();	
+			lists = new List<TierList>();
 
 	}
 
@@ -210,7 +213,22 @@
 
 	void OpenDataFolder()
 	{
-		Process.Start("explorer.exe", TierLister.GetMainFolder());
+		Process.Start("explorer.exe", TierService.GetMainFolder());
+	}
+
+	async Task Save()
+	{
+		_saveCts?.Cancel();
+		_saveCts = new CancellationTokenSource();
+		var token = _saveCts.Token;
+
+		try
+		{
+			await Task.Delay(500, token);
+			await Task.Run(async () => await TierService.SaveAll(), token);
+			Logger.LogInformation("Saving!");
+		}
+		catch (OperationCanceledException) { /* debounced away, that's fine */ }
 	}
 
 	// -------- TIERLIST MANAGEMENT
