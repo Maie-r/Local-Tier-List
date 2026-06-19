@@ -8,12 +8,12 @@
 @inject ISnackbar Snackbar
 <link href="css/charactercolor.css" rel="stylesheet" />
 
-<div class="m-md-1 p-md-1 m-lg-4 p-lg-4 overflow-hidden">
+<div class="m-md-1 p-md-1 m-lg-4 p-lg-4 overflow-hidden smoothScaling">
 	<h1 class="d-flex text-light mx-auto justify-content-center" style="font-weight: 600">Local Tier List Maker</h1>
 	<div class="row col-12 d-flex flex-column text-light m-2">
 		<h3 style="font-weight: 500"> Tier Lists: </h3>
 		@if (!mobile){
-				<button class="m-2 ms-4 col-1 bg-highlight rounded p-1" @onclick="() => OpenDataFolder()">
+				<button class="m-2 ms-4 col-1 bg-highlight clickableOuter rounded p-1" @onclick="() => OpenDataFolder()">
 				<MudIcon Icon="@Icons.Material.Filled.Folder" Title="Data Folder"/>
 				</button>
 		}
@@ -23,51 +23,78 @@
 				<h5> There are no saved TierLists, create one with the "New TierList" button!. </h5>
 			</div>
 		}
-		<div class="row mx-1 flex-row justify-content-start col-12 flex-fill flex-wrap d-flex">
-			@for (int local = 0; local < lists.Count; local++)
-			{
-				int i = local;
-				
+		else
+		{
+			<div class="row mx-1 flex-row justify-content-start col-12 flex-fill flex-wrap d-flex">
+				<div class="form-check form-switch">
+					<input class="form-check-input" type="checkbox" id="showcaseform"
+						   @onchange="() => Toggle(ref editTierlists)">
+					<label class="form-check-label" for="showcaseform">
+						Edit Tierlists
+					</label>
+				</div>
+				@for (int local = 0; local < lists.Count; local++)
+				{
+					int i = local;
+
+					<div class="row col-sm-4 col-md-3 col-lg-2 mx-0 my-1 d-flex flex-wrap">
+						<div class="row p-0 col-12 d-flex flex-fill">
+							<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
+								@if (!editTierlists)
+								{
+									<a class="col-12 btn text-center justify-content-center p-2 rounded clickableOuter align-content-center"
+									   style="background-color: @(String.IsNullOrEmpty(lists[i].color) ? "var(--highlight-color)" : lists[i].color);
+														   color: @(String.IsNullOrEmpty(lists[i].color) ? "white" : GlobalStyleFunctions.GetMostReadableTextColor(lists[i].color))"
+									   @onclick="() => Select(lists[i])">
+										@lists[i].name
+									</a>
+								}
+								else
+								{
+									<a class="col-10 btn text-center justify-content-center p-2 rounded draggableOuter align-content-center" draggable="true"
+									   style="background-color: @(String.IsNullOrEmpty(lists[i].color) ? "var(--highlight-color)" : lists[i].color);
+											  outline: dashed 2px; outline-color: @(String.IsNullOrEmpty(lists[i].color) ? "var(--highlight-color)" : lists[i].color);
+                                              color: @(String.IsNullOrEmpty(lists[i].color) ? "white" : GlobalStyleFunctions.GetMostReadableTextColor(lists[i].color))"
+									   @ondragover="() => DragDropApi<TierList>.OverHere(lists, i)"
+									   @ondragleave="() => DragDropApi<TierList>.OuttaHere()"
+									   @onmousedown="(e) => TLOnPress(e, i)"
+									   @ondragend="async () => { if (DragDropApi<TierList>.StopDrag()) await Save(); } ">
+										@lists[i].name
+									</a>
+									<button class="text-light col-2 p-2 ms-1 btn bg-danger clickable rounded flex-nowrap align-content-center" @onclick="() => YouSure(lists[i])">✖</button>
+								}
+							</div>
+						</div>
+					</div>
+				}
 				<div class="row col-sm-4 col-md-3 col-lg-2 mx-0 my-1 d-flex flex-wrap">
 					<div class="row p-0 col-12 d-flex flex-fill">
 						<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
-							<a class="col-10 btn text-center justify-content-center p-2 rounded clickable align-content-center" 
-								style="background-color: @(String.IsNullOrEmpty(lists[i].color) ? "var(--highlight-color)" : lists[i].color); 
-									   color: @(String.IsNullOrEmpty(lists[i].color) ? "white" : GlobalStyleFunctions.GetMostReadableTextColor(lists[i].color))"
-								@onclick="() => Select(lists[i])"> @lists[i].name
-							</a>
-							<button class="text-light col-2 p-2 ms-1 btn bg-danger clickable rounded flex-nowrap align-content-center" @onclick="() => YouSure(lists[i])">✖</button>
+							<h5 class="clickableOuter flex-fill p-0 m-0 text-center rounded btn template align-content-center text-light" style="min-height: 40px" @onclick="NewTierList"> New Tierlist </h5>
 						</div>
 					</div>
 				</div>
-			}
-			<div class="row col-sm-4 col-md-3 col-lg-2 mx-0 my-1 d-flex flex-wrap">
-				<div class="row p-0 col-12 d-flex flex-fill">
-					<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
-						<h5 class="clickable flex-fill p-0 m-0 text-center rounded btn template align-content-center" style="min-height: 40px" @onclick="NewTierList"> New Tierlist </h5>
-					</div>
-				</div>
 			</div>
-		</div>
+		}
 		<div class="d-flex mx-2 my-2 col-12 col-md-4">
 			<div class="row col-sm-6 col-md-2 col-lg-1 mx-2 my-1 d-flex flex-fill flex-wrap">
 				<div class="row p-0 col-12 d-flex flex-fill">
 					<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
-						<h5 class="clickable flex-fill p-1 m-0 text-center rounded btn bg-primary align-content-center" @onclick="@(() => OpenModal("Import"))"> <MudIcon Icon="@Icons.Material.Filled.Download" Title="Import" /> Import Tierlists </h5>
+						<h5 class="clickableOuter flex-fill p-1 m-0 text-center rounded btn bg-primary align-content-center text-light" @onclick="@(() => OpenModal("Import"))"> <MudIcon Icon="@Icons.Material.Filled.Download" Title="Import" /> Import Tierlists </h5>
 					</div>
 				</div>
 			</div>
 			<div class="row col-sm-6 col-md-2 col-lg-1 mx-2 my-1 d-flex flex-fill flex-wrap">
 				<div class="row p-0 col-12 d-flex flex-fill">
 					<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
-						<h5 class="clickable flex-fill p-2 m-0 text-center rounded btn bg-primary align-content-center" @onclick="ExportAll"> <MudIcon Icon="@Icons.Material.Filled.Upload" Title="Export" /> Export All Tierlists </h5>
+						<h5 class="clickableOuter flex-fill p-2 m-0 text-center rounded btn bg-primary align-content-center text-light" @onclick="ExportAll"> <MudIcon Icon="@Icons.Material.Filled.Upload" Title="Export" /> Export All Tierlists </h5>
 					</div>
 				</div>
 			</div>
 			<div class="row col-sm-6 col-md-2 col-lg-1 mx-2 my-1 d-flex flex-fill flex-wrap">
 				<div class="row p-0 col-12 d-flex flex-fill">
 					<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
-						<h5 class="clickable flex-fill p-2 m-0 text-center rounded btn bg-primary align-content-center" @onclick="@(() => OpenModal("Merge"))"> MERGE TWO (DEBUG) </h5>
+						<h5 class="clickableOuter flex-fill p-2 m-0 text-center rounded btn bg-primary align-content-center text-light" @onclick="@(() => OpenModal("Merge"))"> MERGE TWO (DEBUG) </h5>
 					</div>
 				</div>
 			</div>
@@ -76,7 +103,7 @@
 	@if (selected != null)
 	{
 		<h5 class="ms-4">Display Settings:</h5>
-		<div class="d-flex flex-row gap-3 p-2 darken-25 rounded ms-0 ms-md-2">
+		<div class="d-flex flex-row gap-3 p-2 darken-25 rounded">
 			<div class="form-check form-switch">
 				<input class="form-check-input" type="checkbox" id="showcaseform"
 					   @onchange="() => Toggle(ref showcase)">
@@ -171,6 +198,17 @@
 			</div>
 		</div>
 	}
+	@if (EditSelected != null)
+	{
+		<div class="maiedal d-flex flex-column text-center justify-content-center">
+			<div class="p-4 darken-85 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
+				<div class="d-flex p-2 text-end justify-content-end">
+					<a class="clickable" @onclick="async () => { EditSelected = null; await Save(); }">✖</a>
+				</div>
+				<MudColorPicker Label="TierList Color" @bind-Text="EditSelected.color" Style="@($"color: {EditSelected.color};")" Placeholder="Select Color" />
+			</div>
+		</div>
+	}
 </div>
 
 
@@ -187,12 +225,13 @@
 	string importErr = "";
 	string mergeErr = "";
 
-	bool showcase, minimal, NoImg, yousure, ImportMenu, ImportReplace, MergeMenu;
+	bool mobile, showcase, minimal, NoImg, yousure, MergeMenu, editTierlists;
+	bool ImportMenu, ImportReplace;
+
+	TierList? EditSelected;
 
 	bool Loading = false;
 	string LoadingMessage = "Loading...";
-
-	bool mobile;
 
 	CancellationTokenSource? _saveCts;
 
@@ -229,6 +268,45 @@
 			Logger.LogInformation("Saving!");
 		}
 		catch (OperationCanceledException) { /* debounced away, that's fine */ }
+	}
+
+	// Mobile drag threshold
+	CancellationTokenSource? dragDelayCts;
+	bool dragArmed = false;
+	bool dragStarted = false;
+	int dragthreshold = 200; // ms
+	ElementReference elementRef;
+
+	async Task TLOnPress(MouseEventArgs e, int index)
+	{
+		if (mobile)
+		{
+			dragStarted = false;
+			dragArmed = true;
+
+			dragDelayCts?.Cancel();
+			dragDelayCts = new CancellationTokenSource();
+
+			try
+			{
+				// long-press threshold (tweak this)
+				await Task.Delay(dragthreshold, dragDelayCts.Token);
+
+				if (!dragArmed)
+					return;
+
+				dragStarted = true;
+				DragDropApi<TierList>.StartDrag(lists, index);
+			}
+			catch (TaskCanceledException)
+			{
+				Logger.LogInformation("DRAGDELAY: Pointer released early! Editing item instead");
+				EditSelected = lists[index];
+			}
+		}
+		else if (e.Buttons == 2) // right click
+			EditSelected = lists[index];
+		else DragDropApi<TierList>.StartDrag(lists, index);
 	}
 
 	// -------- TIERLIST MANAGEMENT
@@ -416,6 +494,7 @@
 		StateHasChanged();
 	}
 
+	// -------- SNACK MESSAGES
 	void SnackAlert(string message)
 	{
 		Snackbar.Add(message, Severity.Info);
