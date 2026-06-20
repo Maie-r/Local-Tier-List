@@ -54,11 +54,12 @@
 									<a class="col-10 btn text-center justify-content-center p-2 rounded draggableOuter align-content-center" draggable="true"
 									   style="background-color: @(String.IsNullOrEmpty(lists[i].color) ? "var(--highlight-color)" : lists[i].color);
 											  outline: dashed 2px; outline-color: @(String.IsNullOrEmpty(lists[i].color) ? "var(--highlight-color)" : lists[i].color);
-                                              color: @(String.IsNullOrEmpty(lists[i].color) ? "white" : GlobalStyleFunctions.GetMostReadableTextColor(lists[i].color))"
+                                              color: @(String.IsNullOrEmpty(lists[i].color) ? "white" : GlobalStyleFunctions.GetMostReadableTextColor(lists[i].color));
+											  opacity: @(DragDropApi<TierList>.GetOver() == lists[i] ? "0.5" : "1")"
 									   @ondragover="() => DragDropApi<TierList>.OverHere(lists, i)"
-									   @ondragleave="() => DragDropApi<TierList>.OuttaHere()"
-									   @onmousedown="(e) => TLOnPress(e, i)"
-									   @ondragend="async () => { if (DragDropApi<TierList>.StopDrag()) await Save(); } ">
+									   @ondragstart="async (e) => await TLOnPress(e, i)"
+									   @onmousedown="async (e) => await TLOnPress(e, i)"
+									   @ondragend="async () => await StopDrag() ">
 										@lists[i].name
 									</a>
 									<button class="text-light col-2 p-2 ms-1 btn bg-danger clickable rounded flex-nowrap align-content-center" @onclick="() => YouSure(lists[i])">✖</button>
@@ -274,13 +275,15 @@
 	CancellationTokenSource? dragDelayCts;
 	bool dragArmed = false;
 	bool dragStarted = false;
-	int dragthreshold = 200; // ms
+	int dragthreshold = 200; // ms btw this isn't functional rn, OnPress only detects touch, not the drag. Drag is detected with onDrag
 	ElementReference elementRef;
 
 	async Task TLOnPress(MouseEventArgs e, int index)
 	{
+		Logger.LogInformation("Ahoy!");
 		if (mobile)
 		{
+			Logger.LogInformation("Ahoy2!");
 			dragStarted = false;
 			dragArmed = true;
 
@@ -296,6 +299,8 @@
 					return;
 
 				dragStarted = true;
+				Logger.LogInformation("DRAGDELAY: Pointer passed threshold, Dragging!");
+
 				DragDropApi<TierList>.StartDrag(lists, index);
 			}
 			catch (TaskCanceledException)
@@ -307,6 +312,23 @@
 		else if (e.Buttons == 2) // right click
 			EditSelected = lists[index];
 		else DragDropApi<TierList>.StartDrag(lists, index);
+	}
+
+	async Task StopDrag()
+	{
+		Logger.LogInformation($"Stopped drag!!");
+		if (mobile)
+		{
+			dragArmed = false;
+			dragDelayCts?.Cancel();
+
+			dragStarted = false;
+		}
+		if (DragDropApi<TierList>.StopDrag()) 
+		{
+			Logger.LogInformation($"AAAAAAAAAAAAA");
+			await Save();
+		} else Logger.LogInformation($"bbbbbbbbbbbb");
 	}
 
 	// -------- TIERLIST MANAGEMENT

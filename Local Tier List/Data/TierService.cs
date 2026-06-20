@@ -36,12 +36,18 @@ namespace Local_Tier_List.Data
         // DEFAULT FILE LOCATIONS  ------------------------------------------
         public static string GetMainFolder()
         {
-            return Path.Join(FileSystem.AppDataDirectory, "TierList");
+            var p = Path.Join(FileSystem.AppDataDirectory, "TierList");
+            if (!Directory.Exists(p))
+            {
+                Debug.WriteLine("Folder not found, creating...");
+                Directory.CreateDirectory(p);
+            }
+            return p;
         }
 
         public static string GetMainFile()
         {
-            var p = Path.Join(FileSystem.AppDataDirectory, "TierList");
+            var p = GetMainFolder();
             return Path.Join(p, "lists.json");
         }
 
@@ -54,7 +60,7 @@ namespace Local_Tier_List.Data
             }
             catch (Exception e)
             {
-                throw new Exception("Failed to save tierlists: " + e.Message);
+                throw new Exception("Couldn't save the tierlist data: " + e);
             }
         }
 

@@ -15,17 +15,13 @@ Local Image Picking:
 
 Add a Loading Service and Loading Screens
 
-css it out kinda, not too elaborate
-{
-	Make Tierlist headers (name input, export, search) prettier
-	Make TierList.. List prettier
-}
-
 Add formatting support for Tier Item Notes
 
-Find some damn way to center the tier text without breaking everyrthing (!?)
-
-Add support for Sorting tierlists into folders, with custom colors (maybe using the Content from maiehobbies? but not necessarily)
+Tierlist Organizing {
+	Coloring (!)
+	Ordering (!)
+	Foldering
+}
 
 Optimize Mobile performance
 {
@@ -46,6 +42,12 @@ Tierlist Merging:
 }
 
 DONE ------------
+
+css it out kinda, not too elaborate (!)
+{
+	Make Tierlist headers (name input, export, search) prettier (!)
+	Make TierList.. List prettier (!)
+}
 
 (!) Advanced search field
 
