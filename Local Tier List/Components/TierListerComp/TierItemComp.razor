@@ -1,0 +1,274 @@
+﻿@using Microsoft.Extensions.Logging
+@using System.Globalization
+@using MudBlazor
+@using Local_Tier_List.Components.TierListerComp.Modals
+@implements IDisposable
+@inject ILogger<TierItemComp> Logger
+@inject IJSRuntime JSRuntime
+
+@*@<a class="clickable draggable" draggable="true" @ondragover="OverHere" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e)" @ondragend="StopDrag">
+	@if (item.img == "" || NoImage)
+	{
+		<p class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") rounded d-flex flex-column flex-fill flex-shrink-1 justify-content-center m-1 text-wrap text-center" style="@GetFontSize(item.name)">@item.name</p>
+	}
+	else
+	{
+		<img src="@item.img" draggable="false" @ondragleave="OuttaHere" alt="@item.name" class="@(isminimal ? "tieritemsmall": "tieritem") @(OverStyle ? "OverItem" : "") rounded flex-fill m-1" @onerror="ImageFail" />
+	}
+</a>*@
+
+@if(mobile) @* WOKRS ON MOBILE *@
+{
+	@*@onpointerover="OverHere" @onpointerout="OuttaHere" @onpointerdown="(e) => StartDrag(e)" @onpointercancel="StopDrag" @onpointerup="StopDrag"*@
+	<div class="clickable draggable" draggable="false" 
+	   @ref="elementRef"
+	   data-tieritem-id="@id"
+	   @onpointerdown="StartDrag"
+	   @onpointerup="StopDrag"
+	   @onpointercancel="StopDrag"
+		   style="touch-action: none!important; @(DragDropApi<TierItem>.GetOver() == item ? "pointer-events: none" : "");">
+		@if (String.IsNullOrEmpty(ImageUsed) || NoImage || imageFailed)
+		{
+			<p class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") unselectable rounded d-flex flex-column flex-fill flex-shrink-1 justify-content-center m-1 text-wrap text-center" style="@GetFontSize(item.name)!; white-space: nowrap; overflow: hidden;">@item.name</p>
+		}
+		else
+		{
+			<img src="@ImageUsed" draggable="false" alt="@item.name" class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") rounded flex-fill m-1" loading="lazy" @onerror="ImageFail"/>
+		}
+	</div>
+}
+else
+{
+	@* WORKS ON DESKTOP *@
+	<a class="clickable draggable" draggable="true" @ondragover="OverHere" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e)" @ondragend="StopDrag">
+		@if (String.IsNullOrEmpty(ImageUsed) || NoImage || imageFailed)
+		{
+			<p class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") rounded d-flex flex-column flex-fill flex-shrink-1 justify-content-center m-1 text-wrap text-center" style="@GetFontSize(item.name)!; white-space: nowrap; overflow: hidden;">@item.name</p>
+		}
+		else
+		{
+			<img src="@ImageUsed" draggable="false" alt="@item.name" class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") rounded flex-fill m-1" loading="lazy" @onerror="ImageFail" />
+		}
+	</a>
+}
+
+@*<script src="imageHandler.js"></script>*@
+<script>
+		window.createBlobUrl = (byteArray, mimeType) => {
+		const blob = new Blob([new Uint8Array(byteArray)], { type: mimeType });
+		return URL.createObjectURL(blob);
+	};
+
+	window.revokeBlobUrl = (url) => URL.revokeObjectURL(url);
+</script>
+<style>
+	.OverItem{
+		opacity: 0.5;
+	}
+
+	.unselectable {
+		-webkit-touch-callout: none;
+		-webkit-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		user-select: none;
+	}
+</style>
+
+@code {
+	[Parameter]
+	public required TierItem item { get; set; }
+
+	[Parameter]
+	public int id { get; set; }
+
+	[Parameter]
+	public bool isminimal { get; set; }
+
+	[Parameter]
+	public bool NoImage { get; set; }
+
+	[Parameter]
+	public bool NoInteraction { get; set; }
+
+	[Parameter]
+	public bool OverStyle { get; set; }
+
+	[Parameter]
+	public EventCallback<TierItem> OnItemSelect { get; set; }
+	[Parameter]
+	public EventCallback<TierItem> OnItemDrag { get; set; }
+	[Parameter]
+	public EventCallback OnItemDragStop { get; set; }
+	[Parameter]
+	public EventCallback<int> OnItemOver { get; set; }
+	[Parameter]
+	public EventCallback OnItemOut { get; set; }
+
+	// Mobile drag threshold 
+	CancellationTokenSource? dragDelayCts;
+	bool dragArmed = false;
+	bool dragStarted = false;
+	int dragthreshold = 200; // ms
+	ElementReference elementRef;
+
+	string ImageUsed; // to differ local img and web image
+
+	bool imageLoading = true;
+
+	bool imageFailed = false;
+
+	bool mobile = false;
+
+	string? _blobUrl;
+
+	protected override async Task OnInitializedAsync()
+	{
+		mobile = OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
+		//Logger.LogInformation(id.ToString());
+		/*if (mobile)
+		Logger.LogInformation("U R ON MOBILE!! PHONE USERR!!!! SCREENTOUCHER!!!");
+				else
+			Logger.LogInformation("U R ON DESKTOP!! MOUSE USERRR!!! SCREENCURSOR!!!");//*/
+
+		//Image Priority: Web > Local > Text
+		// for debugging purposes though, prioritizing local
+		if (NoImage) return;
+		if (item.imgBytes != null){
+			ImageUsed = await LoadB64Image(item.imgBytes, "image/jpeg");
+			Logger.LogInformation("LocalImage");
+		}
+		else
+			ImageUsed = item.img;
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+			item.ComponentInstance = this;
+	}
+
+	async Task<string> LoadB64Image(byte[] imageBytes, string mimeType)
+	{
+		var res = await Task.Run(async () =>
+		{
+			if (_blobUrl != null)
+				await JSRuntime.InvokeVoidAsync("revokeBlobUrl", _blobUrl); // cleanup old one
+
+			return await JSRuntime.InvokeAsync<string>("createBlobUrl", imageBytes, mimeType);
+		});
+		return res;
+	}
+
+	void ImageFail()
+	{
+		imageFailed = true;
+		Logger.LogInformation($"Failed to load {item.name}'s image over here");
+		StateHasChanged();
+	}
+
+	void Select(MouseEventArgs e)
+	{
+		if (e.Buttons == 2) // right click
+			OnItemSelect.InvokeAsync(item);
+	}
+
+	string GetFontSize(string name)
+	{
+		return GlobalStyleFunctions.GetItemFontSize(name, isminimal ? 0.7 : 1, mobile);
+	}
+
+	async Task StartDrag(MouseEventArgs e) // Draggin'
+	{
+		if (NoInteraction) return;
+		//Console.Beep();
+		Logger.LogInformation($"Started drag with {item.name} from tier {item.parent.ogname}! {e.Button}");
+
+		if (mobile)
+		{
+			dragStarted = false;
+			dragArmed = true;
+
+			dragDelayCts?.Cancel();
+			dragDelayCts = new CancellationTokenSource();
+
+			try
+			{
+				// long-press threshold (tweak this)
+				await Task.Delay(dragthreshold, dragDelayCts.Token);
+
+				if (!dragArmed)
+					return;
+
+				dragStarted = true;
+
+				Logger.LogInformation("DRAGDELAY: Pointer passed threshold, Dragging!");
+
+				// comment to disable drag ghost
+				
+				await JSRuntime.InvokeVoidAsync(
+					"dragGhost.create",
+					elementRef,
+					e.ClientX,
+					e.ClientY
+				);//*/
+				await OnItemDrag.InvokeAsync(item);
+			}
+			catch (TaskCanceledException)
+			{
+				Logger.LogInformation("DRAGDELAY: Pointer released early! Editing item instead");
+				await OnItemSelect.InvokeAsync(item);
+			}
+		}
+		else if (e.Buttons == 2) // right click
+			await OnItemSelect.InvokeAsync(item);
+		else
+		{
+			await OnItemDrag.InvokeAsync(item);
+		}
+	}
+
+	async Task StopDrag(MouseEventArgs e)
+	{
+		if (NoInteraction) return;
+
+		Logger.LogInformation($"Stopped drag!");
+		if (mobile)
+		{
+			dragArmed = false;
+			dragDelayCts?.Cancel();
+
+			if (!dragStarted)
+				return;
+
+			dragStarted = false;
+		}
+		await OnItemDragStop.InvokeAsync();
+	}
+
+	async Task OverHere()
+	{
+		Logger.LogInformation($"pointer over {item.name}");
+		await OnItemOver.InvokeAsync(id);
+	}
+
+	async Task OuttaHere()
+	{
+		Logger.LogInformation("AAAH ITS WORKING AGAIN"); // its not btw :( at least not universally
+		await OnItemOut.InvokeAsync();
+	}
+
+	public async Task ForceRefresh() 
+	{
+		Logger.LogInformation("Ahoy refresh");
+		await InvokeAsync(StateHasChanged);
+	}
+
+	public void Dispose()
+	{
+		if (_blobUrl != null)
+			JSRuntime.InvokeVoidAsync("revokeBlobUrl", _blobUrl);
+
+		item.ComponentInstance = null;
+	}
+}

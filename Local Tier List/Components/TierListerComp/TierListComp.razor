@@ -1,0 +1,812 @@
+﻿@page "/tier"
+@using System.Globalization
+@using System.Collections
+@using Microsoft.Extensions.Logging
+@using Microsoft.Maui.Media
+@using Microsoft.Maui.Storage
+@using MudBlazor
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Local_Tier_List.Components.TierListerComp.Modals
+@inject ILogger<TierListComp> Logger
+@inject IJSRuntime JSRuntime
+<link href="_content/MaieBlazorLib/css/TierlistStyling.css" rel="stylesheet" />
+
+<div style="overflow: hidden">
+	@if (Loading)
+	{
+		<div>
+			<h2>Loading...</h2>
+		</div>
+	}
+	else
+	{
+		<div class="col-12 d-flex darken-50 flex-column text-light rounded" style="border: ridge 2px @(String.IsNullOrEmpty(selected.color) ? "black" : selected.color)">
+			<div id="TIERLIST HEADER" class="d-flex flex-wrap flex-fill flex-row rounded"> <!-- TIERLIST HEADER -->
+				<input type="text" class="d-flex text-center darken-50 rounded col-12 col-md-4 me-2 p-2 text-light" @bind="@selected.name" @bind:after="@(async () => { selected.ModifiedNow(); await TrySave();})"
+					   placeholder="Tierlist Name" style="border-bottom: ridge 2px @(String.IsNullOrEmpty(selected.color) ? "black" : selected.color); border-right: ridge 2px @(String.IsNullOrEmpty(selected.color) ? "black" : selected.color)">
+				<div class="d-flex flex-row flex-nowrap flex-fill py-1 me-4">
+					<div class="d-flex flex-nowrap justify-content-center align-items-center flex-fill me-2">
+						<MudTextField @bind-Value="filter" Clearable="true" Placeholder="Search" Immediate="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="m-0 mx-2 p-0 text-light flex-fill"></MudTextField>
+						<MudTooltip class="col-6 col-md-3" Color="Color.Transparent">
+							<ChildContent>
+								<MudIcon Icon="@Icons.Material.Filled.Info"/>
+							</ChildContent>
+							<TooltipContent>
+								<div class="text-light darken-95 rounded p-3 m-0 col-12">
+									<p>Search normally for name. Use [] to search for tags (ex: [film])</p> 
+									<p>Composite search: </p>
+									<p>OR: use ',' between names <br />
+									   ex: (Red, Green) ([film], [Neflix]) (Red, [Netflix])</p>
+									<p>AND: use '+' between names <br />
+									   ex: (Red+Green) ([film]+[Neflix]) (Red+[Netflix])</p>
+									<p>NOT: use '-' before the excluded name <br />
+									   ex: (Red+ -dark) ([film]+ -[Neflix]) (Red, -[Netflix])</p>
+								</div>
+							</TooltipContent>
+						</MudTooltip>
+					</div>
+					<div class="d-flex p-0 flex-nowrap flex-row mx-1">
+						<h5 class="clickable flex-fill p-2 m-0 text-center rounded btn bg-primary align-content-center" @onclick="Export"> Export Tierlist </h5>
+					</div>
+					@if (!showcase)
+					{
+						<div class="d-flex p-0 mx-1">
+							<h5 class="clickable flex-fill p-2 m-0 text-center rounded btn bg-highlight align-content-center" @onclick="() => Toggle(ref TierEdit)"> Edit Tiers </h5>
+						</div>
+					}
+				</div>
+			</div>
+			@foreach (var pair in selected.tiers) //<!-- TIERS -->
+			{
+				<div class="p-0 m-0 d-flex darken-25 flex-md-row @(minimal ? "flex-sm-row" : "flex-column") col-12"
+				>
+					<a class="text-box-container d-flex clickable text-center smoothBlending justify-content-center @(minimal ? "col-1 flex-row" : "flex-row") align-items-center py-1 py-sm-1 py-md-auto"
+					@onmousedown="(e) => SelectTier(e, pair.Key)" style="background-color: @pair.Value.color"
+					data-tier-id="@pair.Key">
+						<input type="text" value="@pair.Value.name" wrap="hard"
+							class="tierput rounded d-flex py-md-auto p-1 m-0 flex-fill text-wrap overflow-visible text-break" 
+							@onchange="(e) => ChangeTierName(e.Value?.ToString(), pair.Key)" placeholder="Tier Title" 
+							style="@GlobalStyleFunctions.GetTierFontSize(pair.Value.name, minimal ? 0.7 : 1, mobile); text-overflow: ellipsis; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; color: @GlobalStyleFunctions.GetMostReadableTextColor(pair.Value.color)"
+						>
+					</a>
+
+					<div class="d-flex flex-fill col-12"
+					@ondrop="(e) => DropIntoTier(pair.Key)"
+					@ondragover="(DragEventArgs e) => OverTier(pair.Key)"
+					@ondragover:preventDefault="true"
+					@onpointermove="(e) => OnPointerMove(e, pair)"
+					@ondragleave="OuttaTier"
+					data-tier-id="@pair.Key">
+
+						<div class="d-flex text-start flex-wrap col-12 ps-1" style="border-top: solid; border-bottom: solid; border-color: @pair.Value.color">
+							@*<Virtualize Items="GetFilteredItems(pair.Value)" ItemSize="100" TItem="TierItem">*@
+							@foreach (var item in GetFilteredItems(pair.Value)) //<!-- TIER ITEMS -->
+							{
+								var idx = pair.Value.items.IndexOf(item);
+								@*<ItemContent Context="item">
+								@{
+									// compute index only when needed (IndexOf is O(n) but Virtualize limits rendered items)
+									var idx = pair.Value.items.IndexOf(item);
+								}*@
+								@if (showcase && !mobile)
+								{
+									<MudTooltip class="col-2" Color="Color.Transparent">
+										<ChildContent>
+											<TierItemComp @key="@($"{item.GetHashCode()} + {item.Renderversion}")" item="@item" id="@idx" isminimal="@minimal" NoImage="@NoImg" OverStyle="@(item == DragDropApi<TierItem>.GetOver())"
+												OnItemSelect="Select"
+												OnItemDrag="() => DragDropApi<TierItem>.StartDrag(pair.Value.items, idx)"
+												OnItemDragStop="StopDrag"
+												OnItemOver="() => DragDropApi<TierItem>.OverHere(pair.Value.items, idx)"
+												OnItemOut="DragDropApi<TierItem>.OuttaHere"></TierItemComp>
+										</ChildContent>
+										<TooltipContent>
+											<div class="text-light darken-95 rounded p-3 m-0">
+												@item.name
+											</div>
+										</TooltipContent>
+									</MudTooltip>
+								}
+								else
+								{
+									<TierItemComp @key="@($"{item.GetHashCode()} + {item.Renderversion}")" item="@item" id="@idx" isminimal="@minimal" NoImage="@NoImg" OverStyle="@(item == DragDropApi<TierItem>.GetOver())"
+									OnItemSelect="Select"
+									OnItemDrag="() => DragDropApi<TierItem>.StartDrag(pair.Value.items, idx)"
+									OnItemDragStop="StopDrag"
+									OnItemOver="() => DragDropApi<TierItem>.OverHere(pair.Value.items, idx)"
+									OnItemOut="DragDropApi<TierItem>.OuttaHere"></TierItemComp>
+
+								}
+								@*</ItemContent>*@
+							}
+							@*@</Virtualize>*@
+							@if (!showcase) //<!-- ADD BUTTON -->
+							{
+								if (minimal)
+								{
+									<h5 class="clickable p-0 m-1 justify-content-center rounded px-auto text-center d-flex flex-column template tieritemsmall" style="@(GlobalStyleFunctions.GetItemFontSize("New Item", 0.7, true))" @onclick="() => Add(pair.Key)"> New Item </h5>
+								}
+								else
+								{
+									<h5 class="clickable p-0 m-1 justify-content-center py-auto rounded text-center my-auto d-flex flex-column template tieritem" style="@(GlobalStyleFunctions.GetItemFontSize("New Item", 1, true))" @onclick="() => Add(pair.Key)"> New Item </h5>
+								}
+							}
+						</div>
+					</div>
+				</div>
+			}
+			<div class="d-flex darken-25 col-12 flex-row m-0 p-0">
+				@if (!showcase)
+				{
+					<div class="p-0 m-0 d-flex darken-25 template flex-row col-12">
+						<a class="text-box-container d-flex clickable text-center smoothBlending justify-content-center @(minimal ? (mobile ? "flex-row flex-fill" : "col-1 flex-row") : "flex-row flex-fill") align-items-center py-1 py-sm-1 py-md-auto" @onclick="NewTier">
+							<input type="text" value="+ Add Tier"
+								   class="tierput rounded d-flex py-md-auto p-1 m-0 flex-fill text-wrap overflow-visible text-break text-light"
+								   placeholder="Tier Title"
+								   style="pointer-events: none; white-space: normal; word-wrap: break-word; overflow-wrap: break-word; border-right: dashed 2px">
+						</a>
+						<div class="d-flex @(mobile ? "col-0" : "flex-fill col-lg-12")"></div>
+					</div>
+				}
+			</div>
+		</div>
+	}
+
+	<!-------------  MODALS  ------------>
+	@if (selecitem != null)
+	{
+		<ItemEdit selecitem="selecitem" selecitemtier="selecitemtier" OnLoaded="OnLoaded" OnLoadingStart="OnLoadingStart" OnExit="Exit" OnDelete="Delete" OnChanged="UpdateModifiedItem"></ItemEdit>
+	}
+	
+	@if (selectier != null)
+	{
+		<SingleTierEdit selected="selected" selectier=selectier OnSave="TrySave" OnExit="Exit" OnModified="UpdateModifiedTier" OnLoaded="OnLoaded" OnLoadingStart="OnLoadingStart"></SingleTierEdit>
+	}
+	
+	@if (TierEdit)
+	{
+		<TierEdit selected="selected" OnSave="TrySave" OnExit="Exit" OnModified="UpdateModifiedTier" OnLoaded="OnLoaded" OnLoadingStart="OnLoadingStart"></TierEdit>
+	}
+</div>
+<div id="drag-ghost-container"></div>
+
+@*<script src="imageHandler.js"></script>*@
+<script>
+	window.getTierItemIdAtPoint = (x, y) => {
+		const el = document.elementFromPoint(x, y);
+		return el?.closest("[data-tieritem-id]")?.dataset.tieritemId ?? null;
+	};
+
+	window.getTierIdAtPoint = (x, y) => {
+		const el = document.elementFromPoint(x, y);
+		if (!el) return null;
+
+		let value = el.closest("[data-tier-id]")?.dataset.tierId;
+
+		//console.log("VALUE: " + value ?? "didn't find DATA-TIER-ID");
+		return value ?? null;
+	};
+
+	//let latestX = 0;
+	//let latestY = 0;
+
+	window.dragGhost = {
+		ghost: null,
+		width: 0,
+		height: 0,
+		pointerMoveHandler: null,
+
+		create: function (element, x, y) {
+			this.remove();
+
+			const rect = element.getBoundingClientRect();
+			const clone = element.cloneNode(true);
+
+			this.width = rect.width;
+			this.height = rect.height;
+
+			clone.style.position = "fixed";
+			clone.style.left = "0px";
+			clone.style.top = "0px";
+			clone.style.width = rect.width + "px";
+			clone.style.height = rect.height + "px";
+			clone.style.pointerEvents = "none";
+			clone.style.opacity = "0.8";
+			clone.style.zIndex = "9999";
+			//clone.style.transform = "scale(1.05)";
+			clone.style.transition = "none";
+			clone.style.willChange = "transform";
+
+			document.body.appendChild(clone);
+
+			this.ghost = clone;
+
+			this.move(x, y);
+
+			this.pointerMoveHandler = (e) => {
+				window.dragGhost.move(e.clientX, e.clientY);
+			};
+
+			window.addEventListener(
+				"pointermove",
+				this.pointerMoveHandler
+			);
+		},
+
+		move: function (x, y) {
+			if (!this.ghost) return;
+
+			this.ghost.style.transform = `translate3d(${x - this.width / 2}px, ${y - this.height / 2}px, 0 )`;
+
+			//this.ghost.style.left = (x - this.ghost.offsetWidth / 2) + "px";
+			//this.ghost.style.top = (y - this.ghost.offsetHeight / 2) + "px";
+		},
+
+		remove: function () {
+			if (this.pointerMoveHandler) {
+
+				window.removeEventListener(
+					"pointermove",
+					this.pointerMoveHandler
+				);
+
+				this.pointerMoveHandler = null;
+			}
+
+			if (this.ghost) {
+
+				this.ghost.remove();
+
+				this.ghost = null;
+			}
+		},
+
+		getElementUnderPointer(x, y) {
+		const el = document.elementFromPoint(x, y);
+
+		if (!el) return null;
+
+		return (
+			el.dataset.tierId ||
+			el.dataset.tieritemId ||
+			null
+		);
+	}
+	};
+</script>
+
+
+@code
+{
+	[Parameter]
+	public required TierList selected { get; set; }
+
+	[Parameter]
+	public TierLister? tl { get; set; } = null!;
+
+	[Parameter]
+	public EventCallback OnSave { get; set; }
+
+	[Parameter] 
+	public EventCallback<string> OnExport { get; set; }
+
+	[Parameter]
+	public EventCallback<string> OnError { get; set; }
+
+	[Parameter]
+	public EventCallback<string> OnLoadingStart { get; set; } // string is loading message
+
+	[Parameter]
+	public EventCallback<string> OnLoaded { get; set; } // string is optional loading complete message
+
+	Dictionary<string, Virtualize<TierItem>> _virtualizeRefs = new();
+
+	bool Loading = true;
+
+	// selected tier
+	Tier? selectier;
+
+	// selected item
+	TierItem? selecitem;
+	string selecitemtier = "";
+
+	// modal confirm
+	bool yousure;
+
+	// tier edit modal
+	bool TierEdit;
+
+	[Parameter]
+	public bool showcase { get; set; }
+	[Parameter]
+	public bool minimal { get; set; }
+	[Parameter]
+	public bool NoImg { get; set; }
+
+	string filter = "";
+	string temptiername = "";
+	//ElementReference temptier;
+
+	string overtier = ""; // which tier mouse is over
+	//string draggedtier = ""; // which tier dragged item was from
+
+	bool mobile;
+
+	// ghost throttle
+	DateTime lastPointerMove = DateTime.MinValue;
+	const int pointerThrottleMs = 16; // 60fps
+	bool handlingPointerMove = false;
+
+	// ------------ GENERAL FUNCTIONS
+	protected override async Task OnInitializedAsync()
+	{
+		mobile = OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
+		await OnLoaded.InvokeAsync();
+		Loading = false;
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender) {
+			await OnLoaded.InvokeAsync();
+			Loading = false;
+		}
+	}
+
+	void Toggle(ref bool thing)
+	{
+		thing = !thing;
+	}
+
+	async Task Export()
+	{
+		await OnLoadingStart.InvokeAsync("Exporting Data to Clipboard...");
+		var json = TierLister.ExportJson(selected);
+		if (string.IsNullOrEmpty(json))
+		{
+			await OnError.InvokeAsync("Couldn't export tierlist: no JSON produced from TierService.tl.ExportJson()");
+			await OnLoaded.InvokeAsync();
+			return;
+		}
+
+		try
+		{
+#if ANDROID || WINDOWS || IOS || MACCATALYST
+	// Use native MAUI clipboard when running as a MAUI app (Android, Windows, iOS, MacCatalyst).
+	await Clipboard.SetTextAsync(json);
+#else
+			// Fallback for browser/web: use navigator.clipboard via JS interop.
+			await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", json);
+			Logger.LogInformation("exported by fallback.");
+#endif
+			Logger.LogInformation("Exported JSON copied to clipboard.");
+			await OnExport.InvokeAsync(json);
+		}
+		catch (Exception ex)
+		{
+			Logger.LogError(ex, "Failed to copy exported JSON to clipboard using primary method.");
+			// Try the other approach as a best-effort fallback.
+			try
+			{
+				await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", json);
+				Logger.LogInformation("Fallback: exported JSON copied to clipboard via JS.");
+			}
+			catch (Exception jsEx)
+			{
+				Logger.LogError(jsEx, "Fallback copy to clipboard via JS also failed.");
+				await OnError.InvokeAsync("Failed to export Tierlist into the clipboard");
+			}
+		}
+		finally
+		{
+			await OnLoaded.InvokeAsync();
+		}
+	}
+
+	// ------------ ITEM & TIER SELECTION 
+	async Task Select(TierItem l)
+	{
+		await Select(l, l.parent.ogname);
+	}
+
+	async Task Select(TierItem i, string key)
+	{
+		//Logger.LogInformation($"Youre showcase is: Damn {showcase}");
+		if (mobile && showcase) return; // So they don't edit accidentally when scrolling
+		if (i == null || i == selecitem) return;
+
+		selecitem = i;
+		selecitemtier = key;
+		selectier = null;
+	}
+
+	void SelectTier(MouseEventArgs e, string tier)
+	{
+		Logger.LogInformation("Clicked tier " + tier);
+		Logger.LogInformation(e.Button.ToString());
+		if (e.Button == 2)
+		{
+			Logger.LogInformation("Registered tier " + tier);
+			selectier = selected.tiers[tier];
+			selecitem = null;
+			selecitemtier = "";
+		}
+	}
+
+	// ------------ ITEM FILTERING
+	bool InFilter(TierItem item)
+	{
+		if (string.IsNullOrWhiteSpace(filter) || filter == "[" || filter == "]" || filter == "+" || filter == "-" || filter == ",")
+		{
+			return true;
+		}
+
+		// ',' is OR
+		string[] ORgroups = filter.Split(',');
+		foreach (string group in ORgroups)
+		{
+			bool groupMatch = true;
+
+			// '+' is AND
+			var ANDgroups = group.Split('+');
+
+			foreach (var condition in ANDgroups)
+			{
+				var term = condition.Trim();
+
+				// starting with '-' is NOT
+				bool negate = term.StartsWith('-');
+				if (negate)
+					term = term[1..];
+
+				bool match;
+
+				if (term.StartsWith('[') && term.EndsWith(']'))
+				{
+					var tag = term[1..^1];
+
+					match = item.tags.Any(t =>
+						t.Contains(tag, StringComparison.OrdinalIgnoreCase));
+				}
+				else
+				{
+					match = item.name.Contains(
+						term,
+						StringComparison.OrdinalIgnoreCase);
+				}
+
+				if (negate)
+					match = !match;
+
+				if (!match)
+				{
+					groupMatch = false;
+					break;
+				}
+			}
+
+			// means one OR is true
+			if (groupMatch)
+				return true;
+
+		}
+		return false;
+	}
+
+	ICollection<TierItem> GetFilteredItems(Tier tier)
+	{
+		if (string.IsNullOrEmpty(filter)) return tier.items;
+		// return a materialized list -- Virtualize performs better with IList-ish sources.
+		return tier.items.Where(x => InFilter(x)).ToList();
+	}
+
+	// ------------ UPDATING LAST MODIFIED
+	void UpdateModifiedItem()
+	{
+		if (selecitem != null)
+			selected.ModifiedNow(selecitem);
+	}
+
+	void UpdateModifiedTier(string tier)
+	{
+		if (selected.tiers.ContainsKey(tier))
+			selected.ModifiedNow(selected.tiers[tier]);
+	}
+
+	async Task Exit()
+	{
+		await OnLoadingStart.InvokeAsync("Saving Item...");
+		//var tempcomponentref = selecitem.ComponentInstance;
+		if (selecitem != null)
+			selecitem.Renderversion++; // force image refresh
+		selecitem = null;
+		selectier = null;
+		TierEdit = false;
+		selecitemtier = "";
+
+		await TrySave();
+
+		StateHasChanged();
+		//await tempcomponentref?.ForceRefresh();
+
+		await OnLoaded.InvokeAsync("Item Saved!");
+	}
+
+	// ------------ NEW ITEM & TIER
+	void Add(string key)
+	{
+		var defaultItemname = "NEW ITEM";
+		TierItem temp = new TierItem(defaultItemname);
+		selected.tiers[key].Add(temp);
+		temp.parent = selected.tiers[key];
+		selecitem = temp;
+		selecitemtier = key;
+		UpdateModifiedItem();
+		//await TrySave();
+	}
+
+	async Task NewTier()
+	{
+		await OnLoadingStart.InvokeAsync("Creating Tier...");
+		var newtiername = "New Tier";
+		selected.tiers.Add(newtiername, new Tier(newtiername, "#EAD21F"));
+		UpdateModifiedTier(newtiername);
+		await TrySave();
+		await OnLoaded.InvokeAsync("Tier Created!");
+	}
+
+	async Task ChangeTierName(string? neww, string old)
+	{
+		Logger.LogInformation($"{neww}");
+		if (String.IsNullOrEmpty(neww)) return;
+		Tier? temp = selected.tiers[old];
+		selected.tiers.Remove(old);
+
+		while (true)
+		{
+			try
+			{
+				selected.tiers.Add(neww, temp);
+				break;
+			}
+			catch
+			{
+				neww += " (1)";
+			}
+		}
+		temp.name = neww;
+		temp.ogname = neww;
+		temp = null;
+		UpdateModifiedTier(neww);
+		await TrySave();
+	}
+
+	async Task TrySave()
+	{
+		await InvokeAsync(() => OnSave.InvokeAsync());
+	}
+
+	// ------------ ITEM DELETION
+	async Task Delete()
+	{
+		if (selecitem == null) return;
+		selected.tiers[selecitemtier].items.Remove(selecitem);
+		UpdateModifiedTier(selecitemtier);
+		selecitem = null;
+		selecitemtier = "";
+		yousure = false;
+		await TrySave();
+	}
+
+	public void Dispose()
+	{
+		selectier = null;
+		selecitem = null;
+	}
+
+	// ---------- DRAG FUNCTIONS
+	async Task StopDrag()
+	{
+		//Logger.LogInformation("Overtier: "+overtier);
+		if (mobile) await JSRuntime.InvokeVoidAsync("dragGhost.remove");
+
+		var dragged = DragDropApi<TierItem>.GetDragged();
+		if (dragged == null)
+		{
+			Logger.LogInformation("Couldn't perform dragdrop Operation: No Dragged Item found!!");
+			return;
+		}
+		var over = DragDropApi<TierItem>.GetOver();
+
+
+		if (!String.IsNullOrEmpty(overtier) && selected.tiers.ContainsKey(overtier))
+		{
+			var OverTier = selected.tiers[overtier];
+			if (over != null)
+			{
+				if (over == dragged && over.parent != OverTier) // fallback
+				{
+					Logger.LogInformation("Unrecognised OverItem Fallback DragDrop");
+					dragged.parent = OverTier;
+					OverTier.Add(dragged);
+					if (DragDropApi<TierItem>.GetDragged() == dragged)
+						DragDropApi<TierItem>.GetDraggedList()!.Remove(dragged);
+					DragDropApi<TierItem>.StopDrag(DragDropBehaviour.Cancel);
+				}//*/
+				else
+				{
+					Logger.LogInformation("Regular tieritem DragDrop!");
+					var result = await Task.Run(() => DragDropApi<TierItem>.StopDrag(DragDropBehaviour.Insert));
+					if (!result) Logger.LogInformation("DragDop Failed: Recognised items, but failed operation");
+					else
+					{
+						var temp3 = dragged.parent;
+						dragged.parent = over.parent;
+						over.parent = temp3;
+					}
+				}
+
+
+			}
+			else //if (dragged == over || over.parent != selected.tiers[overtier])
+			{
+				// DragDropApi<TierItem>.GetOver().parent != selected.tiers[overtier] && selected.tiers[overtier].items.Count <= 0  it just failed to remove the dragover item, so going to the tierlist is priority
+				Logger.LogInformation("Regular Tier-Based DragDrop!");
+				//Logger.LogInformation(DragDropApi<TierItem>.GetOver().parent.name + " != " + selected.tiers[overtier].name);
+				var tempdragged = dragged;
+				//Logger.LogInformation("Got Dragged");
+				var overlist = selected.tiers[overtier];
+				Logger.LogInformation($"got list {overlist.name}");
+				overlist.items.Add(new TierItem("you shouldn't be seeing this,", overlist));
+				//Logger.LogInformation("Added dummy element");
+				DragDropApi<TierItem>.OverHere(overlist.items, overlist.items.Count - 1);
+				//Logger.LogInformation("Forced over dummy element");
+				var res = await Task.Run(() => DragDropApi<TierItem>.StopDrag(DragDropBehaviour.Replace));
+				if (!res)
+				{
+					Logger.LogInformation("Failed tier item swap");
+				}
+				else 
+					tempdragged.parent = overlist;
+
+				//Logger.LogInformation(overlist.AsString());
+
+			}
+		}
+		else if (over != null)
+		{
+			var res = await Task.Run(() => DragDropApi<TierItem>.StopDrag(DragDropBehaviour.Insert));
+			if (!res)
+				Logger.LogInformation("DragDrop Failed: Couldn't recognise over tier, and failed fallback method");
+			else Logger.LogInformation("Fallback Tier-Based DragDrop");
+		}
+		else
+		{
+			Logger.LogInformation("DragDrop Failed: Couldn't recognise Overtier nor Over item");
+		}
+		await Task.Run(() => TrySave());
+		if (mobile)
+		{
+			if (DragDropApi<TierItem>.GetOver() != null)
+			{
+				Logger.LogInformation("Over Item is still " + DragDropApi<TierItem>.GetOver()!.name);
+				DragDropApi<TierItem>.StopDrag(DragDropBehaviour.Cancel);
+			}
+		}
+		overtier = "";
+		StateHasChanged();
+
+
+	}
+
+	async Task OnPointerMove(PointerEventArgs e, KeyValuePair<string, Tier> pair) // Mobile only implementation
+	{
+		if (DragDropApi<TierItem>.GetDragged() == null || !mobile || handlingPointerMove) return;
+
+		//Logger.LogInformation("Still draggin " + DragDropApi<TierItem>.GetDragged().name);
+
+		//Logger.LogInformation($"Pointer moved at {e.ClientX}, {e.ClientY}");
+
+		// DISABLE TO REMOVE DRAG GHOST
+
+		var now = DateTime.UtcNow;
+
+		handlingPointerMove = true;
+
+		if ((now - lastPointerMove).TotalMilliseconds < pointerThrottleMs)
+		{ handlingPointerMove = false; return; }
+		try
+		{
+			var overId = await JSRuntime.InvokeAsync<string>(
+			"getTierItemIdAtPoint",
+			e.ClientX,
+			e.ClientY
+		);
+
+			var overTierId = await JSRuntime.InvokeAsync<string>(
+				"getTierIdAtPoint",
+				e.ClientX,
+				e.ClientY
+			);
+
+			lastPointerMove = now;
+			/*await JSRuntime.InvokeVoidAsync(
+			"dragGhost.move",
+			e.ClientX,
+			e.ClientY
+		);*/
+			//*/
+
+		if (DragDropApi<TierItem>.GetDragged() == null) return; // for async reasons
+			if (!String.IsNullOrEmpty(overId)) {
+				if (!String.IsNullOrEmpty(overTierId))
+				{
+					if (overTierId != overtier) {
+						Logger.LogInformation($"Pointer is over TierItem id: {overId} (which is in Tier {overTierId} )");
+						OverTier(overTierId);
+					}
+				}
+				else Logger.LogInformation($"Pointer is over TierItem id: {overId}");
+
+				//var itemId = 0;
+
+				if (!int.TryParse(overId, out var itemId))
+				{
+					Logger.LogInformation("Failed to parse overId");
+					handlingPointerMove = false;
+					return;
+				}
+
+				bool DifferentElement = false;
+				try
+				{
+					var overelement = selected.tiers[overtier].items[itemId];
+					if (overelement != DragDropApi<TierItem>.GetOver()) DifferentElement = true;
+				}
+				catch { }
+				if (DragDropApi<TierItem>.GetOver() == null || DifferentElement)
+					DragDropApi<TierItem>.OverHere(selected.tiers[overtier].items, itemId);
+			}
+			else if (!String.IsNullOrEmpty(overTierId))
+			{
+				if (overTierId != overtier)
+				{
+					Logger.LogInformation($"Pointer is over Tier {overTierId}");
+					OverTier(overTierId);
+				}
+			}
+			else
+			{
+				Logger.LogInformation("Pointer is over NOTHING");
+				if (!String.IsNullOrEmpty(overtier))
+					overtier = "";
+				if (DragDropApi<TierItem>.GetOver() != null)
+					DragDropApi<TierItem>.OuttaHere();
+			}
+		} catch (Exception external) { Logger.LogInformation(external.Message); }
+		finally {
+			handlingPointerMove = false;
+		}
+	}
+
+	void OverTier(string tier)
+	{
+		Logger.LogInformation($"Mouse over {tier} tier!");
+		overtier = tier;
+		StateHasChanged();
+	}
+
+	void OuttaTier(MouseEventArgs e)
+	{
+		//Logger.LogInformation($"Mouse out (tier)!");
+		overtier = "";
+		StateHasChanged();
+	}
+
+	void DropIntoTier(string Tier)
+	{
+		Logger.LogInformation($"Mouse dropped over {Tier} tier!");
+		overtier = Tier;
+		if (mobile) StopDrag();
+		StateHasChanged();
+	}
+}

@@ -1,0 +1,280 @@
+﻿@using System.Globalization
+@using System.Collections
+@using Microsoft.Extensions.Logging
+@using Microsoft.Maui.Media
+@using Microsoft.Maui.Storage
+@using MudBlazor
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@inject ILogger<TierListComp> Logger
+@inject IJSRuntime JSRuntime
+
+<div style="overflow: hidden">
+		<div class="maiedal align-content-center">
+			<div class="d-flex col-12 col-md-6 darken-85 bgblur-5 flex-column mx-auto my-auto shadow align-content-center" style="border-radius: 2vw">
+				<div class="d-flex p-4 text-end justify-content-end">
+					<a class="clickable fs-5" @onclick="Exit">✖</a>
+				</div>
+				<div class="d-flex flex-column flex-wrap p-md-4 p-1 pt-0">
+				<img class="text-center d-flex mx-auto my-2" src="@selecImage" style="max-height: 45vh; max-width: 45vw; border: 1px solid; border: grey; border-radius: 2vw" />
+				<div>
+					<p class="text-danger">@itemErrorText</p>
+				</div>
+				<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitem.name" TextChanged="@(() => Validate("name"))" Label="Title" Variant="Variant.Outlined"></MudTextField>
+				<div class="d-flex flex-nowrap col-12">
+					<MudTextField Class="center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitem.img" TextChanged="@(async () => { selecImage = await GetSelectImage(); UpdateModifiedDate(); })" Label="Image Link" Variant="Variant.Outlined"></MudTextField>
+					@if (mobile)
+					{
+						<div class="d-flex col-4 align-content-center align-items-center text-center justify-content-center me-2">
+							<button class="btn bg-highlight me-2 py-3" @onclick="() => PickLocalImage(false)"><MudIcon Icon="@Icons.Material.Filled.FolderOpen" Color="Color.Default" Title="PickLocal" /></button>
+							<button class="btn bg-highlight py-3" @onclick="() => PickLocalImage(true)"><MudIcon Icon="@Icons.Material.Filled.CameraAlt" Color="Color.Default" Title="PickLocalCamera" /></button>
+						</div>
+					}
+				</div>
+				<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitemtags" TextChanged="@(() => { Validate("tags"); UpdateTags(); })" Label="Tags" Variant="Variant.Outlined" HelperText="(Separated by commas)"></MudTextField>
+				<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitem.notes" TextChanged="@UpdateModifiedDate" Label="Notes" Variant="Variant.Outlined"></MudTextField>
+
+				<!--
+				<input type="text" class="spinput rounded flex-fill text-light mx-2 my-1 p-2" @bind="@selecitemtags" @bind:after="@(() => {Validate("tags"); UpdateTags();}) " placeholder="Tags (separated by comma)">
+				<input type="text" class="spinput rounded flex-fill text-light mx-2 my-1 p-3" @bind="@selecitem.notes" @bind:after="UpdateModifiedDate" placeholder="Additional Notes">
+				-->
+				<button class="bg-danger rounded m-2 p-2" @onclick="YouSure">Remove</button>
+				</div>
+			</div>
+		</div>
+		@if (yousure)
+		{
+			<div class="maiedal d-flex flex-column text-center justify-content-center">
+			<div class="p-3 darken-85 bgblur-5 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-10 col-md-5 border-2 shadow border-light">
+					<p> Are you sure you want to permanently remove this item? </p>
+					<div class="d-flex flex-row flex-wrap mx-auto">
+						<button class="mx-2 text-light" @onclick="YouSure">No</button>
+						<button class="mx-2 rounded p-2 bg-danger" @onclick="OnDelete">Yes, remove it</button>
+					</div>
+				</div>
+			</div>
+		}
+	}
+</div>
+
+<style>
+	.center-input .mud-input-slot {
+		text-align: center;
+	}
+
+	.thick-outline .mud-input-outlined-border {
+		border-width: 2px!important;
+	}
+</style>
+
+<script>
+	window.createBlobUrl = (byteArray, mimeType) => {
+	const blob = new Blob([new Uint8Array(byteArray)], { type: mimeType });
+	return URL.createObjectURL(blob);
+	};
+
+	window.revokeBlobUrl = (url) => URL.revokeObjectURL(url);
+</script>
+
+
+@code
+{
+	[Parameter]
+	public required TierItem selecitem { get; set; }
+	[Parameter]
+	public required string selecitemtier { get; set; }
+
+	[Parameter]
+	public EventCallback OnExit { get; set; }
+	[Parameter]
+	public EventCallback OnChanged { get; set; }
+	[Parameter]
+	public EventCallback OnDelete { get; set; }
+	[Parameter]
+	public EventCallback<string> OnLoadingStart { get; set; }
+	[Parameter]
+	public EventCallback<string> OnLoaded { get; set; }
+	[Parameter]
+	public EventCallback<string> OnError { get; set; }
+
+	// selected item
+	string selecitemtags = "";
+	string selecImage = "";
+	string? _selectbloburl;
+	string itemErrorText = "";
+
+	// modal confirm
+	bool yousure;
+
+	bool mobile;
+
+	// --------- INITIAL LOADING
+	protected override async Task OnInitializedAsync()
+	{
+		mobile = OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
+		await SetLect();
+	}
+
+	async Task SetLect()
+	{
+		await OnLoadingStart.InvokeAsync("Loading Item...");
+		selecitemtags = "";
+		if (selecitem.tags != null)
+		{
+			for (int j = 0; j < selecitem.tags.Length; j++)
+				selecitemtags += selecitem.tags[j] + (j != selecitem.tags.Length - 1 ? ", " : "");
+		}
+		selecImage = await GetSelectImage();
+		await OnLoaded.InvokeAsync("Item Loaded!");
+
+	}
+
+	// --------- GENERAL FUNCTIONS
+	async Task UpdateModifiedDate()
+	{
+		await OnChanged.InvokeAsync();
+	}
+
+	void YouSure()
+	{
+		yousure = !yousure;
+	}
+
+	// ---------- INPUT VALIDATION AND UPDATE
+	void Validate(string field)
+	{
+		itemErrorText = "";
+		switch (field)
+		{
+			case "name":
+				if (selecitem!.name.StartsWith('-'))
+				{
+					itemErrorText = "The item name cannot start with '-'.";
+					selecitem.name = selecitem.name.Replace("-", "");
+				}
+				else if (selecitem!.name.Contains(','))
+				{
+					itemErrorText = "The item name cannot contain any commas (',').";
+					selecitem.name = selecitem.name.Replace(",", "");
+				}
+				else if (selecitem!.name.Contains('+'))
+				{
+					itemErrorText = "The item name cannot contain any '+' symbols.";
+					selecitem.name = selecitem.name.Replace("+", "");
+				}
+				else itemErrorText = "";
+				break;
+			case "tags":
+				bool cleanup = false;
+				foreach (var tag in selecitemtags.Split(','))
+				{
+					if (selecitemtags.StartsWith('-'))
+					{
+						itemErrorText = "The tags cannot start with '-'."; cleanup = true; break;
+					}
+					else if (selecitemtags.Contains('+'))
+					{
+						itemErrorText = "The tags cannot contain any '+' symbols."; cleanup = true; break;
+					}
+					else itemErrorText = "";
+				}
+				if (cleanup)
+				{
+					selecitemtags = selecitemtags.Trim();
+					selecitemtags = selecitemtags.Replace("+", "");
+					selecitemtags = selecitemtags.Replace(", -", ", ");
+					selecitemtags = selecitemtags.Replace(",-", ",");
+					selecitemtags = selecitemtags.Replace(" -", "");
+					if (selecitemtags.StartsWith("-"))
+						selecitemtags = selecitemtags[1..];
+				}
+				break;
+		}
+		UpdateModifiedDate();
+	}
+
+	async Task UpdateTags()
+	{
+		if (selecitem == null) return;
+		await OnLoadingStart.InvokeAsync("Updating Tags...");
+		string[] tags = selecitemtags.Split(',');
+		for (int i = 0; i < tags.Length; i++)
+			tags[i] = tags[i].Trim();
+		selecitem.tags = tags;
+		await OnLoaded.InvokeAsync("Tags Updated!");
+	}
+
+	// ---------- EXIT MODAL
+	async Task Exit()
+	{
+		Dispose();
+		await OnExit.InvokeAsync();
+	}
+
+	public void Dispose()
+	{
+		if (_selectbloburl != null)
+			JSRuntime.InvokeVoidAsync("revokeBlobUrl", _selectbloburl);
+	}
+
+	// ---------- IMAGE HANDLING
+	async Task<string> GetSelectImage()
+	{
+		if (selecitem == null) return "";
+
+		var res = "";
+
+		if (selecitem.imgBytes != null)
+			return await LoadB64Image(selecitem.imgBytes, "image/jpeg");
+		else
+			return selecitem.img;
+	}
+
+	async Task PickLocalImage(bool Camera)
+	{
+		if (mobile)
+		{
+			FileResult? photo;
+			if (Camera)
+				photo = await MediaPicker.Default.CapturePhotoAsync();
+			else
+			{
+				var ptos = await MediaPicker.Default.PickPhotosAsync(new MediaPickerOptions() { SelectionLimit = 1 });
+				photo = ptos[0];
+			}
+			if (photo is null) return;
+
+			await using Stream stream = await photo.OpenReadAsync();
+			using MemoryStream ms = new();
+			await stream.CopyToAsync(ms);
+
+			byte[] imageBytes = ms.ToArray();
+			/*string? b64 = Convert.ToBase64String(ms.ToArray());
+			if (b64 == null)
+			{
+				await OnError.InvokeAsync("Failed to convert image to base64 string");
+				return;
+				}
+			Logger.LogInformation("Base4 string: " + b64);
+			selecitem.imgLocal = b64;*/
+			selecitem.imgBytes = imageBytes;
+			selecImage = await GetSelectImage();
+			UpdateModifiedDate();
+			StateHasChanged();
+		}
+		else
+		{
+			await OnError.InvokeAsync("Local image picking is only implemented for mobile currently");
+		}
+	}
+
+	async Task<string> LoadB64Image(byte[] imageBytes, string mimeType)
+	{
+		if (_selectbloburl != null)
+			await JSRuntime.InvokeVoidAsync("revokeBlobUrl", _selectbloburl); // cleanup old one
+
+		return await JSRuntime.InvokeAsync<string>("createBlobUrl", imageBytes, mimeType);
+	}
+
+
+	
+}

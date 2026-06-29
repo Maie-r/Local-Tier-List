@@ -2,7 +2,9 @@
     --highlight-color: rgb(160, 80, 220);
 }
 
-.bg-highlight {  background-color: var(--highlight-color); }
+.bg-highlight {  
+    background-color: var(--highlight-color); 
+}
 
 .darken-25 {
     background-color: rgba(0, 0, 0, 0.25);
@@ -21,6 +23,22 @@
 
 .darken-95 {
     background-color: rgba(0, 0, 0, 0.95);
+}
+
+.bgblur-10 {
+    backdrop-filter: blur(10px);
+}
+
+.bgblur-5 {
+    backdrop-filter: blur(5px);
+}
+
+.smoothScaling {
+    transition: height 0.25s, width 0.25s
+}
+
+.smoothBlending {
+    transition: color 0.25s, background-color 0.25s
 }
 
 .clickable {
@@ -65,6 +83,38 @@
     transition: mix-blend-mode 0.25s;
 }
 
+.clickable-cursor {
+    cursor: pointer;
+}
+
+.draggable {
+    cursor: crosshair;
+    touch-action: none;
+}
+
+.draggable:hover h3 .team span {
+    color: var(--color-highlight) !important;
+    transition: color 0.25s;
+}
+
+.draggable:hover h3 {
+    color: white;
+    mix-blend-mode: overlay;
+    transition: mix-blend-mode 0.25s;
+}
+
+.draggable:hover h4 {
+    color: white;
+    mix-blend-mode: overlay;
+    transition: mix-blend-mode 0.25s;
+}
+
+.draggable:hover h5 {
+    color: white;
+    mix-blend-mode: overlay;
+    transition: mix-blend-mode 0.25s;
+}
+
 .draggableOuter {
     cursor: crosshair;
     touch-action: none;
@@ -78,15 +128,19 @@
     transition: border-width 0.25s, outline-color 0.25s;
 }
 
+.hidden {
+    display: none !important;
+    transition: display 0.5s;
+}
 
 .bg-subtlegrad {
     background-image: linear-gradient(190deg,#332470 10%, #10011f 100%);
     transition: mix-blend-mode 0.25s;
 }
 
-.template {
-    border: dashed;
-    border-color: rgba(255, 255, 255, 0.75);
+.hole {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 0.5vw;
 }
 
 .LoadingDisplay {
@@ -111,18 +165,35 @@
     overflow: auto;
 }
 
-.smoothScaling {
-    transition: height 0.25s, width 0.25s
+.template {
+    border: dashed;
+    border-color: rgba(255, 255, 255, 0.75);
 }
 
-.smoothBlending {
-    transition: color 0.25s, background-color 0.25s
+.tieritem {
+    aspect-ratio: 1/1;
+    height: 100px;
+    width: 100px;
 }
 
-.bgblur-10 {
-    backdrop-filter: blur(10px);
+.tieritemsmall {
+    aspect-ratio: 1/1;
+    height: 64px;
+    width: 64px;
 }
 
-.bgblur-5 {
-    backdrop-filter: blur(5px);
+.tierput {
+    text-align: center;
+    background-color: transparent;
+    border: none;
+    aspect-ratio: 1/1;
+    max-height: 100px;
 }
+
+.spinput {
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.25);
+    border: solid;
+    border-width: 1px;
+}
+

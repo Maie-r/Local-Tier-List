@@ -5,9 +5,9 @@ using System.Text;
 using System.Text.Json;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using MaieBlazorLib.LocalTierLister;
+using Local_Tier_List.Data.TierLists;
 
-namespace Local_Tier_List.Data
+namespace Local_Tier_List.Data.App
 {
     public class TierService
     {

@@ -73,6 +73,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="App\" />
       <Folder Include="Resources\Images\" />
       <Folder Include="Resources\Splash\" />
     </ItemGroup>
