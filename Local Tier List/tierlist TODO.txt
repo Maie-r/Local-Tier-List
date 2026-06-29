@@ -10,7 +10,7 @@ Github:
 Local Image Picking:
 {
 	Windows
-	Mobile (Gallery and camera) (! Camera)
+	(!) Mobile
 }
 
 Add a Loading Service and Loading Screens
@@ -18,8 +18,8 @@ Add a Loading Service and Loading Screens
 Add formatting support for Tier Item Notes
 
 Tierlist Organizing {
-	Coloring (!)
-	Ordering (!)
+	(!) Coloring 
+	(!) Ordering 
 	Foldering
 }
 
@@ -27,26 +27,26 @@ Optimize Mobile performance
 {
 	Drag Ghost operation
 	Tier Edit open delay
-	Slight scrolling lag on showcase mode (due to popups) (!)
-}
-
-Tierlist Merging:
-{
-	Add an actually good interface for it
-	Merge two into one: 
-	{
-		Merge as update (incoming into current) ! (!)
-		Merge as datakeep (current into incoming) (not needed)
-		Merge smartly (last changed is kept unless empty) (!)
-	}
+	(!) Slight scrolling lag on showcase mode (due to popups) 
 }
 
 DONE ------------
 
-css it out kinda, not too elaborate (!)
+(!) Tierlist Merging: 
 {
-	Make Tierlist headers (name input, export, search) prettier (!)
-	Make TierList.. List prettier (!)
+	(!) Add an actually good interface for it 
+	Merge two into one: 
+	{
+		(!) Merge as update (incoming into current)
+		(not needed) Merge as datakeep (current into incoming) 
+		(!) Merge smartly (last changed is kept unless empty) 
+	}
+}
+
+(!) css it out kinda, not too elaborate 
+{
+	(!) Make Tierlist headers (name input, export, search) prettier 
+	(!) Make TierList.. List prettier 
 }
 
 (!) Advanced search field

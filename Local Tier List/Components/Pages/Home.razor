@@ -160,7 +160,7 @@
 	@if (ImportMenu)
 	{
 		<div class="maiedal d-flex flex-column text-center justify-content-center">
-			<div class="p-4 darken-85 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
+			<div class="p-4 darken-85 bgblur-5 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
 				<p> Paste below the JSON string of the Tierlist(s) you want to import! </p>
 				<textarea class="font-monospace bg-dark text-light col-12 mb-2" style="height:200px;" @bind="importString"></textarea>
 				<div>
@@ -183,7 +183,7 @@
 	@if (MergeMenu)
 	{
 		<div class="maiedal d-flex flex-column text-center justify-content-center">
-			<div class="p-4 darken-85 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
+			<div class="p-4 darken-85 bgblur-5 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
 				<p> Paste below the JSON string of the Tierlist(s) you want to merge! </p><br />
 				<p> Current: </p>
 				<textarea class="font-monospace bg-dark text-light col-12 mb-2" style="height:200px;" @bind="merge1String"></textarea>
@@ -191,6 +191,14 @@
 				<textarea class="font-monospace bg-dark text-light col-12 mb-2" style="height:200px;" @bind="merge2String"></textarea>
 				<div>
 					<p class="text-danger">@mergeErr</p>
+				</div>
+				<div class="my-5">
+						<MudSelect @bind-Value="currentMergeBehaviour" Label="Merging Behaviour">
+							@foreach (var kv in MergeOptions)
+							{
+								<MudSelectItem Value="kv.Value">@kv.Key</MudSelectItem>
+							}
+						</MudSelect>
 				</div>
 				<div class="d-flex flex-row flex-wrap mx-auto">
 					<button class="mx-2 border-1 border-white text-light rounded btn p-2" @onclick="() => MergeMenu = false">Cancel</button>
@@ -202,7 +210,7 @@
 	@if (EditSelected != null)
 	{
 		<div class="maiedal d-flex flex-column text-center justify-content-center">
-			<div class="p-4 darken-85 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
+			<div class="p-4 darken-85 bgblur-5 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
 				<div class="d-flex p-2 text-end justify-content-end">
 					<a class="clickable" @onclick="async () => { EditSelected = null; await Save(); }">✖</a>
 				</div>
@@ -228,6 +236,16 @@
 
 	bool mobile, showcase, minimal, NoImg, yousure, MergeMenu, editTierlists;
 	bool ImportMenu, ImportReplace;
+
+	// merging
+	MergeBehaviour currentMergeBehaviour = MergeBehaviourTable.SmartMerge;
+	Dictionary<string, MergeBehaviour> MergeOptions = new Dictionary<string, MergeBehaviour>() 
+	{ 
+		{ "Smart Merge", MergeBehaviourTable.SmartMerge },
+		{ "Priority on Incoming", MergeBehaviourTable.MergeIntoCurrent },
+		{ "Smart Merge (Shallow)", MergeBehaviourTable.SmartMergeShallow },
+		{ "Priority on Incoming (Shallow)", MergeBehaviourTable.MergeIntoCurrentShallow },
+	};
 
 	TierList? EditSelected;
 
@@ -484,7 +502,7 @@
 		{
 			var t1 = TierService.Import(merge1String);
 			var t2 = TierService.Import(merge2String);
-			var t3 = TLMerger.MergeTierLists(MergeBehaviourTable.SmartMerge, t1[0], t2[0]);
+			var t3 = TLMerger.MergeTierLists(currentMergeBehaviour, t1[0], t2[0]);
 			TierService.TierLists.Add(t3);
 		}
 		else mergeErr = "Please fill both fields";

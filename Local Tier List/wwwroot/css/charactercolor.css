@@ -118,3 +118,11 @@
 .smoothBlending {
     transition: color 0.25s, background-color 0.25s
 }
+
+.bgblur-10 {
+    backdrop-filter: blur(10px);
+}
+
+.bgblur-5 {
+    backdrop-filter: blur(5px);
+}
