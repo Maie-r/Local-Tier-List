@@ -284,7 +284,7 @@
 		try
 		{
 			await Task.Delay(500, token);
-			await Task.Run(async () => await TierService.SaveAll(), token);
+			await TierService.SaveAll();
 			Logger.LogInformation("Saving!");
 		}
 		catch (OperationCanceledException) { /* debounced away, that's fine */ }

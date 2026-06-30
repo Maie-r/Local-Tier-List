@@ -74,7 +74,7 @@
 					@ondrop="(e) => DropIntoTier(pair.Key)"
 					@ondragover="(DragEventArgs e) => OverTier(pair.Key)"
 					@ondragover:preventDefault="true"
-					@onpointermove="(e) => OnPointerMove(e, pair)"
+				    @onpointermove="(e) => OnPointerMoveOverTier(e, pair)"
 					@ondragleave="OuttaTier"
 					data-tier-id="@pair.Key">
 
@@ -357,6 +357,29 @@
 		thing = !thing;
 	}
 
+	string GetUniqueName(TierItem currentItem, string baseName)
+	{
+		var existingNames = selected.tiers
+		.SelectMany(t => t.Value.items)
+		.Where(i => i != currentItem)
+		.Select(i => i.name)
+		.ToHashSet();
+
+		if (!existingNames.Contains(baseName))
+			return baseName;
+
+		int counter = 1;
+
+		while (existingNames.Contains($"{baseName} ({counter})"))
+		{
+			counter++;
+		}
+
+		Logger.LogInformation("Had to rename");
+
+		return $"{baseName} ({counter})";
+	}
+
 	async Task Export()
 	{
 		await OnLoadingStart.InvokeAsync("Exporting Data to Clipboard...");
@@ -371,12 +394,12 @@
 		try
 		{
 #if ANDROID || WINDOWS || IOS || MACCATALYST
-	// Use native MAUI clipboard when running as a MAUI app (Android, Windows, iOS, MacCatalyst).
-	await Clipboard.SetTextAsync(json);
+			// Use native MAUI clipboard when running as a MAUI app (Android, Windows, iOS, MacCatalyst).
+			await Clipboard.SetTextAsync(json);
 #else
-			// Fallback for browser/web: use navigator.clipboard via JS interop.
-			await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", json);
-			Logger.LogInformation("exported by fallback.");
+	// Fallback for browser/web: use navigator.clipboard via JS interop.
+	await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", json);
+	Logger.LogInformation("exported by fallback.");
 #endif
 			Logger.LogInformation("Exported JSON copied to clipboard.");
 			await OnExport.InvokeAsync(json);
@@ -517,7 +540,10 @@
 		await OnLoadingStart.InvokeAsync("Saving Item...");
 		//var tempcomponentref = selecitem.ComponentInstance;
 		if (selecitem != null)
+		{
 			selecitem.Renderversion++; // force image refresh
+			selecitem.name = GetUniqueName(selecitem, selecitem.name);
+		}
 		selecitem = null;
 		selectier = null;
 		TierEdit = false;
@@ -534,8 +560,8 @@
 	// ------------ NEW ITEM & TIER
 	void Add(string key)
 	{
-		var defaultItemname = "NEW ITEM";
-		TierItem temp = new TierItem(defaultItemname);
+		var defaultItemName = GetUniqueName(new TierItem(), "New Item");
+		TierItem temp = new TierItem(defaultItemName);
 		selected.tiers[key].Add(temp);
 		temp.parent = selected.tiers[key];
 		selecitem = temp;
@@ -698,9 +724,9 @@
 
 	}
 
-	async Task OnPointerMove(PointerEventArgs e, KeyValuePair<string, Tier> pair) // Mobile only implementation
+	async Task OnPointerMoveOverTier(PointerEventArgs e, KeyValuePair<string, Tier> pair) // Mobile Only Imprementation
 	{
-		if (DragDropApi<TierItem>.GetDragged() == null || !mobile || handlingPointerMove) return;
+		if (!mobile || DragDropApi<TierItem>.GetDragged() == null || handlingPointerMove) return;
 
 		//Logger.LogInformation("Still draggin " + DragDropApi<TierItem>.GetDragged().name);
 
@@ -736,11 +762,13 @@
 		);*/
 			//*/
 
-		if (DragDropApi<TierItem>.GetDragged() == null) return; // for async reasons
-			if (!String.IsNullOrEmpty(overId)) {
+			if (DragDropApi<TierItem>.GetDragged() == null) return; // for async reasons
+			if (!String.IsNullOrEmpty(overId))
+			{
 				if (!String.IsNullOrEmpty(overTierId))
 				{
-					if (overTierId != overtier) {
+					if (overTierId != overtier)
+					{
 						Logger.LogInformation($"Pointer is over TierItem id: {overId} (which is in Tier {overTierId} )");
 						OverTier(overTierId);
 					}
@@ -782,8 +810,10 @@
 				if (DragDropApi<TierItem>.GetOver() != null)
 					DragDropApi<TierItem>.OuttaHere();
 			}
-		} catch (Exception external) { Logger.LogInformation(external.Message); }
-		finally {
+		}
+		catch (Exception external) { Logger.LogInformation(external.Message); }
+		finally
+		{
 			handlingPointerMove = false;
 		}
 	}
