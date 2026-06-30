@@ -85,6 +85,8 @@ namespace Local_Tier_List.Data.App
             }
             catch (FileNotFoundException e)
             {
+                Debug.WriteLine("Failed to load data: " + e.Message);
+                return new TierLister();
                 Debug.WriteLine("Attempting loading with legacy options...");
                 // Legacy fallback
                 try

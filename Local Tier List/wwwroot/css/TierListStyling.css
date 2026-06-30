@@ -157,6 +157,19 @@
 .maiedal {
     position: fixed;
     z-index: 1;
+    display: flex;
+    margin: 2.5% 2.5% 2.5% 2.5%;
+    left: 0;
+    top: 0;
+    width: 95%;
+    height: 95%;
+    overflow: auto;
+}
+
+.maiedal2 {
+    position: fixed;
+    display: flex;
+    z-index: 1;
     margin: 5% 5% 5% 5%;
     left: 0;
     top: 0;

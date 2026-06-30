@@ -56,15 +56,15 @@
     </ItemGroup>
 
     <ItemGroup>
-      <AndroidResource Remove="Platforms\Android\Resources\values\ids.xml" />
+      <None Remove="Platforms\Android\Resources\values\ids.xml" />
     </ItemGroup>
 	
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.20" />
-        <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="10.0.20" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="10.0.20" />
-        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.1" />
+        <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.80" />
+        <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="10.0.80" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="10.0.80" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.9" />
         <PackageReference Include="MudBlazor" Version="8.15.0" />
     </ItemGroup>
 

@@ -21,7 +21,7 @@ namespace Local_Tier_List
                 var root = FindViewById(Android.Resource.Id.Content) as Android.Views.ViewGroup;
                 if (root != null)
                 {
-                    // Resource.Id.jumpToStart comes from Resources/values/ids.xml (added to project)
+                    // Resource.Id.jumpToStart comes from Resources/values/ids.xml (added to project) (make sure its built as an AndroidResource)
                     var existing = root.FindViewById(Resource.Id.jumpToStart);
                     if (existing == null)
                     {

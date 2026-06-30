@@ -8,53 +8,45 @@
 @inject ILogger<TierListComp> Logger
 @inject IJSRuntime JSRuntime
 
-<div style="overflow: hidden">
-		<div class="maiedal align-content-center">
-			<div class="d-flex col-12 col-md-6 darken-85 bgblur-5 flex-column mx-auto my-auto shadow align-content-center" style="border-radius: 2vw">
-				<div class="d-flex p-4 text-end justify-content-end">
-					<a class="clickable fs-5" @onclick="Exit">✖</a>
-				</div>
-				<div class="d-flex flex-column flex-wrap p-md-4 p-1 pt-0">
-				<img class="text-center d-flex mx-auto my-2" src="@selecImage" style="max-height: 45vh; max-width: 45vw; border: 1px solid; border: grey; border-radius: 2vw" />
-				<div>
-					<p class="text-danger">@itemErrorText</p>
-				</div>
-				<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitem.name" TextChanged="@(() => Validate("name"))" Label="Title" Variant="Variant.Outlined"></MudTextField>
-				<div class="d-flex flex-nowrap col-12">
-					<MudTextField Class="center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitem.img" TextChanged="@(async () => { selecImage = await GetSelectImage(); UpdateModifiedDate(); })" Label="Image Link" Variant="Variant.Outlined"></MudTextField>
-					@if (mobile)
-					{
-						<div class="d-flex col-4 align-content-center align-items-center text-center justify-content-center me-2">
-							<button class="btn bg-highlight me-2 py-3" @onclick="() => PickLocalImage(false)"><MudIcon Icon="@Icons.Material.Filled.FolderOpen" Color="Color.Default" Title="PickLocal" /></button>
-							<button class="btn bg-highlight py-3" @onclick="() => PickLocalImage(true)"><MudIcon Icon="@Icons.Material.Filled.CameraAlt" Color="Color.Default" Title="PickLocalCamera" /></button>
-						</div>
-					}
-				</div>
-				<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitemtags" TextChanged="@(() => { Validate("tags"); UpdateTags(); })" Label="Tags" Variant="Variant.Outlined" HelperText="(Separated by commas)"></MudTextField>
-				<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitem.notes" TextChanged="@UpdateModifiedDate" Label="Notes" Variant="Variant.Outlined"></MudTextField>
-
-				<!--
-				<input type="text" class="spinput rounded flex-fill text-light mx-2 my-1 p-2" @bind="@selecitemtags" @bind:after="@(() => {Validate("tags"); UpdateTags();}) " placeholder="Tags (separated by comma)">
-				<input type="text" class="spinput rounded flex-fill text-light mx-2 my-1 p-3" @bind="@selecitem.notes" @bind:after="UpdateModifiedDate" placeholder="Additional Notes">
-				-->
-				<button class="bg-danger rounded m-2 p-2" @onclick="YouSure">Remove</button>
-				</div>
+<div class="maiedal">
+	<div class="d-flex col-12 col-md-6 darken-85 bgblur-5 flex-column mx-auto my-auto overflow-visible shadow align-content-center" style="border-radius: 2vw">
+		<div class="d-flex p-4 text-end justify-content-end">
+			<a class="clickable fs-5" @onclick="Exit">✖</a>
+		</div>
+		<div class="d-flex flex-column flex-wrap p-md-4 p-1 pt-0">
+			<img class="text-center d-flex mx-auto " src="@selecImage" style="max-height: 40vh; max-width: 40vw; border: 1px solid; border: grey; border-radius: 2vw" />
+			<div>
+				<p class="text-danger">@itemErrorText</p>
+			</div>
+			<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitem.name" TextChanged="@(() => Validate("name"))" Label="Title" Variant="Variant.Outlined"></MudTextField>
+			<div class="d-flex flex-nowrap col-12">
+				<MudTextField Class="center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitem.img" TextChanged="@(async () => { selecImage = await GetSelectImage(); UpdateModifiedDate(); })" Label="Image Link" Variant="Variant.Outlined"></MudTextField>
+				@if (mobile)
+				{
+					<div class="d-flex col-4 align-content-center align-items-center text-center justify-content-center me-2">
+						<button class="btn bg-highlight me-2 py-3" @onclick="() => PickLocalImage(false)"><MudIcon Icon="@Icons.Material.Filled.FolderOpen" Color="Color.Default" Title="PickLocal" /></button>
+						<button class="btn bg-highlight py-3" @onclick="() => PickLocalImage(true)"><MudIcon Icon="@Icons.Material.Filled.CameraAlt" Color="Color.Default" Title="PickLocalCamera" /></button>
+					</div>
+				}
+			</div>
+			<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitemtags" TextChanged="@(() => { Validate("tags"); UpdateTags(); })" Label="Tags" Variant="Variant.Outlined" HelperText="(Separated by commas)"></MudTextField>
+			<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitem.notes" TextChanged="@UpdateModifiedDate" Label="Notes" Variant="Variant.Outlined"></MudTextField>
+			<button class="bg-danger rounded m-2 p-2" @onclick="YouSure">Remove</button>
+		</div>
+	</div>
+</div>
+@if (yousure)
+{
+	<div class="maiedal d-flex flex-column text-center justify-content-center">
+		<div class="p-3 darken-85 bgblur-5 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-10 col-md-5 border-2 shadow border-light">
+			<p> Are you sure you want to permanently remove this item? </p>
+			<div class="d-flex flex-row flex-wrap mx-auto">
+				<button class="mx-2 text-light" @onclick="YouSure">No</button>
+				<button class="mx-2 rounded p-2 bg-danger" @onclick="OnDelete">Yes, remove it</button>
 			</div>
 		</div>
-		@if (yousure)
-		{
-			<div class="maiedal d-flex flex-column text-center justify-content-center">
-			<div class="p-3 darken-85 bgblur-5 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-10 col-md-5 border-2 shadow border-light">
-					<p> Are you sure you want to permanently remove this item? </p>
-					<div class="d-flex flex-row flex-wrap mx-auto">
-						<button class="mx-2 text-light" @onclick="YouSure">No</button>
-						<button class="mx-2 rounded p-2 bg-danger" @onclick="OnDelete">Yes, remove it</button>
-					</div>
-				</div>
-			</div>
-		}
-	}
-</div>
+	</div>
+}
 
 <style>
 	.center-input .mud-input-slot {
