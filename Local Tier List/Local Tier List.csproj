@@ -69,6 +69,7 @@
 	
 
     <ItemGroup>
+        <PackageReference Include="HtmlSanitizer" Version="9.0.892" />
         <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.80" />
         <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="10.0.80" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="10.0.80" />

@@ -5,6 +5,7 @@
 @using Microsoft.Maui.Storage
 @using MudBlazor
 @using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Ganss.Xss
 @inject ILogger<TierListComp> Logger
 @inject IJSRuntime JSRuntime
 
@@ -30,7 +31,7 @@
 				}
 			</div>
 			<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitemtags" TextChanged="@(() => { Validate("tags"); UpdateTags(); })" Label="Tags" Variant="Variant.Outlined" HelperText="(Separated by commas)"></MudTextField>
-			<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitem.notes" TextChanged="@UpdateModifiedDate" Label="Notes" Variant="Variant.Outlined"></MudTextField>
+			<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitem.notes" TextChanged="@UpdateModifiedDate" Label="Notes" Variant="Variant.Outlined" AutoGrow="true" OnBlur="@(() => Validate("notes"))"></MudTextField>
 			<button class="bg-danger rounded m-2 p-2" @onclick="YouSure">Remove</button>
 		</div>
 	</div>
@@ -135,6 +136,7 @@
 	void Validate(string field)
 	{
 		itemErrorText = "";
+		Logger.LogInformation("Validating " + field);
 		switch (field)
 		{
 			case "name":
@@ -178,6 +180,16 @@
 					selecitemtags = selecitemtags.Replace(" -", "");
 					if (selecitemtags.StartsWith("-"))
 						selecitemtags = selecitemtags[1..];
+				}
+				break;
+			case "notes":
+				var sanitizer = new HtmlSanitizer();
+				sanitizer.AllowedTags.Clear();
+				string safe = sanitizer.Sanitize(selecitem.notes);
+				if (safe != selecitem.notes)
+				{
+					itemErrorText = "Please don't add HTML elements to the notes";
+					selecitem.notes = safe;
 				}
 				break;
 		}

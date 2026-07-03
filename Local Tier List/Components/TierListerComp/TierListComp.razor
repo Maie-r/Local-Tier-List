@@ -100,8 +100,12 @@
 												OnItemOut="DragDropApi<TierItem>.OuttaHere"></TierItemComp>
 										</ChildContent>
 										<TooltipContent>
-											<div class="text-light darken-95 rounded p-3 m-0">
-												@item.name
+											<div class="text-light darken-75 bgblur-5 rounded p-3 m-0" style="border-color: @pair.Value.color; border-width: 1px">
+												<h5>@item.name</h5>
+												@if (!String.IsNullOrEmpty(item.notes))
+												{
+													<p>@((MarkupString)item.notes.Replace("\n", "<br>"))</p>
+												}
 											</div>
 										</TooltipContent>
 									</MudTooltip>
@@ -168,6 +172,12 @@
 	}
 </div>
 <div id="drag-ghost-container"></div>
+
+<style>
+	.tooltip-push {
+		margin: -40px;
+	}
+</style>
 
 @*<script src="imageHandler.js"></script>*@
 <script>
