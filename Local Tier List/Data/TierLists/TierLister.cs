@@ -1,13 +1,15 @@
-﻿using Microsoft.Maui.Storage;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using static MudBlazor.CategoryTypes;
 using Local_Tier_List.Components.TierListerComp;
+using Microsoft.JSInterop;
+using Microsoft.Maui.Storage;
+using static MudBlazor.CategoryTypes;
 
 namespace Local_Tier_List.Data.TierLists
 {
@@ -184,10 +186,7 @@ namespace Local_Tier_List.Data.TierLists
     public class TierItem
     {
         public string name { get; set; }
-        public string img { get; set; }
-        public string imgLocal { get; set; } //local address
-        public byte[] imgBytes { get; set; }     
-        public string imgMime { get; set; }
+        public ImageSource img { get; set; }
         public string[] tags { get; set; }
         public string notes { get; set; }
         public DateTime lastModified { get; set; } = DateTime.UtcNow;
@@ -200,13 +199,13 @@ namespace Local_Tier_List.Data.TierLists
         public TierItem(string name) 
         {
             this.name = name;
-            this.img = "";
+            this.img = new LinkedImage("");
         }
 
         public TierItem(string name, string img)
         {
             this.name = name;
-            this.img = img;
+            this.img = new LinkedImage(img);
         }
 
         public string AsString()
@@ -220,8 +219,85 @@ namespace Local_Tier_List.Data.TierLists
             string[] eh = both.Split(',');
             //Debug.WriteLine(both);
             name = eh[0];
-            img = eh[1];
+            img = new LinkedImage(eh[1]);
             this.parent = parent;
+        }
+    }
+
+    public abstract class ImageSource;
+
+    public class LinkedImage : ImageSource
+    {
+        public required string link { get; set; }
+        public bool isLocal { get { return IsLocal(this); } }
+        public static bool IsLocal(LinkedImage img)
+        {
+            return !img.link.StartsWith("http");
+        }
+
+        public static string SimpliflyLink(string link)
+        {
+            return @"_" + link.Replace(@"\", "/") // jesus christ
+                        .Split("/").Last<string>()
+                        .Replace(' ', '_')
+                        .Replace('.', '_')
+                        .Replace("(", "")
+                        .Replace(")", "")
+                        .Replace("!", "");
+        }
+
+        /// <summary>
+        /// Gets the correct media URL for the given LinkedImage, handling local files and caching.
+        /// </summary>
+        /// <param name="li"></param>
+        /// <param name="JSRuntime"></param>
+        /// <returns></returns>
+        public static async Task<string> GetMediaUrl(LinkedImage li, IJSRuntime JSRuntime)
+        {
+            if (li.isLocal)
+            {
+                // These JS functions are in index.html
+                bool alreadyCached = await JSRuntime.InvokeAsync<bool>("hasCachedMedia", LinkedImage.SimpliflyLink(li.link));
+                if (!alreadyCached)
+                {
+                    try
+                    {
+                        await using var stream = File.OpenRead(li.link);
+                        var streamRef = new DotNetStreamReference(stream);
+
+                        return await JSRuntime.InvokeAsync<string>("setMediaSourceForClass", LinkedImage.SimpliflyLink(li.link), streamRef, "img");
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.WriteLine("Error loading local media: " + e.Message);
+                        return li.link;
+                    }
+                }
+                else
+                {
+                    return await JSRuntime.InvokeAsync<string>("getCachedMedia", LinkedImage.SimpliflyLink(li.link));
+                }
+            }
+            else return li.link;
+        }
+
+        [SetsRequiredMembers]
+        public LinkedImage(string link)
+        {
+            this.link = link;
+        }
+    }
+
+    public class MemoryImage : ImageSource
+    {
+        public required byte[] bytes { get; set; }
+        public required string mime { get; set; }
+
+        [SetsRequiredMembers]
+        public MemoryImage(byte[] bytes, string mime)
+        {
+            this.bytes = bytes;
+            this.mime = mime;
         }
     }
 }

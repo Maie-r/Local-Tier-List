@@ -15,13 +15,40 @@
 			<a class="clickable fs-5" @onclick="Exit">✖</a>
 		</div>
 		<div class="d-flex flex-column flex-wrap p-md-4 p-1 pt-0">
-			<img class="text-center d-flex mx-auto " src="@selecImage" style="max-height: 40vh; max-width: 40vw; border: 1px solid; border: grey; border-radius: 2vw" />
+			<img class="text-center d-flex mx-auto @(selecitem.img is LinkedImage li1 && li1.isLocal ? LinkedImage.SimpliflyLink(li1.link) : "")" src="@selecImage" style="max-height: 40vh; max-width: 40vw; border: 1px solid; border: grey; border-radius: 2vw" />
 			<div>
 				<p class="text-danger">@itemErrorText</p>
 			</div>
 			<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitem.name" TextChanged="@(() => Validate("name"))" Label="Title" Variant="Variant.Outlined"></MudTextField>
 			<div class="d-flex flex-nowrap col-12">
-				<MudTextField Class="center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitem.img" TextChanged="@(async () => { selecImage = await GetSelectImage(); UpdateModifiedDate(); })" Label="Image Link" Variant="Variant.Outlined"></MudTextField>
+				@if (selecitem.img is LinkedImage li)
+				{
+					<MudTextField Class="center-input thick-outline mx-2" Style="color: white;" @bind-Value="@li.link" TextChanged="@(async () => { selecImage = await GetSelectImage(); UpdateModifiedDate(); })" Label="Image Link" Variant="Variant.Outlined"></MudTextField>
+					@if (!mobile)
+					{
+						<div class="d-flex flex-nowrap justify-content-center align-items-center me-2">
+						<MudTooltip class="col-6 col-md-3" Color="Color.Transparent">
+							<ChildContent>
+								<MudIcon Icon="@Icons.Material.Filled.Info"/>
+							</ChildContent>
+							<TooltipContent>
+								<div class="text-light darken-95 rounded p-3 m-0 col-12">
+									<p>Can be an online URL (http:) or a local address of an image in your computer</p> 
+									<p>Use the button on the right to select an image directly </p>
+								</div>
+							</TooltipContent>
+						</MudTooltip>
+						</div>
+
+						<div class="d-flex align-content-center align-items-center text-center justify-content-center">
+							<button class="btn bg-highlight me-2 py-3" @onclick="() => PickLocalImage(false)"><MudIcon Icon="@Icons.Material.Filled.FolderOpen" Color="Color.Default" Title="Pick Local Image" /></button>
+						</div>
+					}
+				}
+				else if (mobile)
+				{
+					<button class="btn bg-highlight col-8 ms-2 py-3 mt-1 text-light" @onclick="@(() => selecitem.img = new LinkedImage(""))">Change to Linked Image</button>
+				}
 				@if (mobile)
 				{
 					<div class="d-flex col-4 align-content-center align-items-center text-center justify-content-center me-2">
@@ -59,16 +86,6 @@
 	}
 </style>
 
-<script>
-	window.createBlobUrl = (byteArray, mimeType) => {
-	const blob = new Blob([new Uint8Array(byteArray)], { type: mimeType });
-	return URL.createObjectURL(blob);
-	};
-
-	window.revokeBlobUrl = (url) => URL.revokeObjectURL(url);
-</script>
-
-
 @code
 {
 	[Parameter]
@@ -104,7 +121,15 @@
 	protected override async Task OnInitializedAsync()
 	{
 		mobile = OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
-		await SetLect();
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstrender)
+	{
+		if (firstrender)
+		{
+			await SetLect();
+			StateHasChanged();
+		}
 	}
 
 	async Task SetLect()
@@ -136,7 +161,7 @@
 	void Validate(string field)
 	{
 		itemErrorText = "";
-		Logger.LogInformation("Validating " + field);
+		Logger.LogInformation("[ItemEdit] Validating " + field);
 		switch (field)
 		{
 			case "name":
@@ -227,24 +252,20 @@
 
 		var res = "";
 
-		if (selecitem.imgBytes != null)
-			return await LoadB64Image(selecitem.imgBytes, "image/jpeg");
-		else
-			return selecitem.img;
+		if (selecitem.img is MemoryImage mi)
+			return await LoadB64Image(mi.bytes, mi.mime);
+		else if (selecitem.img is LinkedImage li){
+			return await LinkedImage.GetMediaUrl(li, JSRuntime);
+		}
+		else throw new Exception("Unknown image type for item " + selecitem.name);
 	}
 
 	async Task PickLocalImage(bool Camera)
 	{
 		if (mobile)
 		{
-			FileResult? photo;
-			if (Camera)
-				photo = await MediaPicker.Default.CapturePhotoAsync();
-			else
-			{
-				var ptos = await MediaPicker.Default.PickPhotosAsync(new MediaPickerOptions() { SelectionLimit = 1 });
-				photo = ptos[0];
-			}
+			FileResult? photo = await PickLocalImageMobile(Camera);
+
 			if (photo is null) return;
 
 			await using Stream stream = await photo.OpenReadAsync();
@@ -252,22 +273,56 @@
 			await stream.CopyToAsync(ms);
 
 			byte[] imageBytes = ms.ToArray();
-			/*string? b64 = Convert.ToBase64String(ms.ToArray());
-			if (b64 == null)
-			{
-				await OnError.InvokeAsync("Failed to convert image to base64 string");
-				return;
-				}
-			Logger.LogInformation("Base4 string: " + b64);
-			selecitem.imgLocal = b64;*/
-			selecitem.imgBytes = imageBytes;
+			var imgsource = new MemoryImage(imageBytes, photo.ContentType);
+			selecitem.img = imgsource;
 			selecImage = await GetSelectImage();
-			UpdateModifiedDate();
+			await UpdateModifiedDate();
 			StateHasChanged();
 		}
 		else
 		{
-			await OnError.InvokeAsync("Local image picking is only implemented for mobile currently");
+			FileResult? img = await PickLocalImageDesktop();
+			if (img is null) return;
+
+			selecitem.img = new LinkedImage(img.FullPath);
+			await UpdateModifiedDate();
+		}
+	}
+
+	async Task<FileResult?> PickLocalImageMobile(bool Camera)
+	{
+		try
+		{
+			if (Camera)
+				return await MediaPicker.Default.CapturePhotoAsync();
+			else
+			{
+				var ptos = await MediaPicker.Default.PickPhotosAsync(new MediaPickerOptions() { SelectionLimit = 1 });
+				return ptos[0];
+			}
+		}
+		catch (Exception ex)
+		{
+			Logger.LogInformation($"[ItemEdit] Image picking error: {ex.Message}");
+			return null;
+		}
+	}
+
+	async Task<FileResult?> PickLocalImageDesktop()
+	{
+		try
+		{
+			var fileResult = await FilePicker.Default.PickAsync();
+
+			if (fileResult == null)
+				return null;
+
+			return fileResult;
+		}
+		catch (Exception ex)
+		{
+			Logger.LogInformation($"[ItemEdit] File picking error: {ex.Message}");
+			return null;
 		}
 	}
 

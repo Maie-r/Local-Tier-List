@@ -5,12 +5,13 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using Local_Tier_List.Data.TierLists;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Storage;
 using MudBlazor;
-using Local_Tier_List.Data.TierLists;
 
 
 namespace Local_Tier_List.Data.TierLists
@@ -76,40 +77,112 @@ namespace Local_Tier_List.Data.TierLists
         /// if it already matches the expected format.</returns>
         static string ParseJson(string importString)
         {
-            string result = importString;
-            try
+            JsonNode root = JsonNode.Parse(importString)!;
+
+            if (root is JsonArray)
             {
-                using JsonDocument doc = JsonDocument.Parse(result);
-
-                var root = doc.RootElement;
-                var rootkind = doc.RootElement.ValueKind;
-
-                if (rootkind == JsonValueKind.Object)
+                root = new JsonObject
                 {
-                    if (root.TryGetProperty("TierLists", out JsonElement tierlists))
-                        if (tierlists.ValueKind == JsonValueKind.Array)
-                            return result;
-                        else
-                            throw new InvalidOperationException("Couldn't parse Json: 'TierLists' Object array does not contain an Array");
-                    else if (root.TryGetProperty("name", out JsonElement n) && root.TryGetProperty("tiers", out JsonElement t))
+                    ["TierLists"] = root
+                };
+            }
+            else if (root is JsonObject obj)
+            {
+                if (!obj.ContainsKey("TierLists"))
+                {
+                    if (obj.ContainsKey("name") && obj.ContainsKey("tiers"))
                     {
-                        return $"{{\"TierLists\":[{result}]}}";
+                        root = new JsonObject
+                        {
+                            ["TierLists"] = new JsonArray(obj)
+                        };
                     }
                     else
+                    {
                         throw new InvalidOperationException("Couldn't parse Json: Root Object is not a TierList or TierLists array");
+                    }
                 }
-                if (rootkind == JsonValueKind.Array)
-                {
-                    return $"{{\"TierLists\":{result}}}";
-                }
+            }
 
-                throw new InvalidOperationException("Couldn't parse Json: Root is not an Object or Array");
-            }
-            catch (Exception e)
+            foreach (JsonNode? tierList in root["TierLists"]!.AsArray())
             {
-                Debug.WriteLine("Unhandled Exception: " + e.Message);
+                if (tierList is JsonObject tl)
+                {
+                    if (tl.ContainsKey("structureVersion"))
+                    {
+                        int version = tl["structureVersion"]!.GetValue<int>();
+                        if (version < TierListDTO.CurrentStructureVersion)
+                        {
+                            FixLegacyData(tl, version);
+                            tl["structureVersion"] = TierListDTO.CurrentStructureVersion;
+                        }
+                    }
+                    else
+                    {
+                        FixLegacyData(tl, 1);
+                        tl["structureVersion"] = TierListDTO.CurrentStructureVersion;
+                    }
+                }
+                
             }
-            return result;
+
+            return root.ToJsonString();
+        }
+
+        static void FixLegacyData(JsonObject root, int legacyversion)
+        {
+            Debug.WriteLine("Patching legacy data");
+            switch (legacyversion)
+            {
+                case 1:
+                    foreach (JsonObject tier in root["tiers"]!.AsArray())
+                    {
+                        foreach (JsonObject item in tier["items"]!.AsArray().Cast<JsonObject>())
+                        {
+                            JsonObject? newImg = null;
+                            if (item.ContainsKey("imgBytes") && item["imgBytes"] != null) // prioritizing this since they can contain unrecoverable data
+                            {
+                                newImg = new JsonObject
+                                {
+                                    ["bytes"] = item["imgBytes"],
+                                    ["mime"] = item.ContainsKey("imgMime") ? item["imgMime"] : "image/jpeg"
+                                };
+                            }
+                            else if (item.ContainsKey("imgLocal") && item["imgLocal"] != null)
+                            {
+                                newImg = new JsonObject
+                                {
+                                    ["link"] = item["imgLocal"]
+                                };
+
+                            }
+                            else if (item.ContainsKey("img") && item["img"] != null)
+                            {
+                                if (item["img"] is not JsonObject)
+                                {
+                                    newImg = new JsonObject
+                                    {
+                                        ["link"] = item["img"]?.GetValue<string>()
+                                    };
+                                }
+                            }
+
+                            if (newImg != null)
+                            {
+                                item.Remove("img");
+                                item["img"] = newImg;
+                            }
+
+                            item.Remove("imgLocal");
+                            item.Remove("imgBytes");
+                            item.Remove("imgMime");
+                        }
+                    }
+                    break;
+                default:
+                    throw new InvalidOperationException($"Unsupported legacy version: {legacyversion}");
+            }
+            
         }
 
 
@@ -182,10 +255,12 @@ namespace Local_Tier_List.Data.TierLists
 
     class TierListDTO
     {
+        public static int CurrentStructureVersion = 2; // This is what will be checked for handling legacy data. Please update whenever changes are made to the structure
         public string name { get; set; }
         public List<TierDTO> tiers { get; set; }
         public string? lastModified { get; set; }
         public string color { get; set; }
+        public int structureVersion { get; set; } = CurrentStructureVersion;
 
         public static TierListDTO ToDTO(TierList tierlist)
         {
@@ -281,10 +356,7 @@ namespace Local_Tier_List.Data.TierLists
     class TierItemDTO
     {
         public string name { get; set; }
-        public string img { get; set; }
-        public string imgLocal { get; set; }
-        public byte[] imgBytes { get; set; }
-        public string imgMime { get; set; }
+        public ImageSourceDTO img { get; set; }
         public string[] tags { get; set; }
         public string notes { get; set; }
         public string? lastModified { get; set; }
@@ -293,10 +365,7 @@ namespace Local_Tier_List.Data.TierLists
         {
             TierItemDTO tiDTO = new TierItemDTO();
             tiDTO.name = tierItem.name;
-            tiDTO.img = tierItem.img;
-            tiDTO.imgLocal = tierItem.imgLocal;
-            tiDTO.imgBytes = tierItem.imgBytes;
-            tiDTO.imgMime = tierItem.imgMime;
+            tiDTO.img = ImageSourceDTO.ToDTO(tierItem.img);
             tiDTO.tags = tierItem.tags;
             tiDTO.lastModified = tierItem.lastModified.ToString("O");
             if (tiDTO.tags == null) tiDTO.tags = Array.Empty<string>();
@@ -308,10 +377,7 @@ namespace Local_Tier_List.Data.TierLists
         {
             TierItem ti = new TierItem();
             ti.name = tierItemDTO.name;
-            ti.img = tierItemDTO.img;
-            ti.imgLocal = tierItemDTO.imgLocal;
-            ti.imgBytes = tierItemDTO.imgBytes;
-            ti.imgMime = tierItemDTO.imgMime;
+            ti.img = ImageSourceDTO.ToObject(tierItemDTO.img);
             ti.tags = tierItemDTO.tags;
             if (tierItemDTO.lastModified != null)
                 ti.lastModified = DateTime.ParseExact( tierItemDTO.lastModified, "O", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
@@ -331,6 +397,35 @@ namespace Local_Tier_List.Data.TierLists
                 Debug.WriteLine($"Error converting TierItemDTO to TierItem: {ex.Message}");
                 throw;
             }
+        }
+    }
+
+    public class ImageSourceDTO
+    {
+        public string? link { get; set; }
+        public string? mime { get; set; }
+        public byte[]? bytes { get; set; }
+
+        public static ImageSourceDTO ToDTO(ImageSource source)
+        {
+            if (source is LinkedImage linkedImage)
+                return new ImageSourceDTO() { link = linkedImage.link, mime = null, bytes = null };
+            else if (source is MemoryImage memoryImage)
+                return new ImageSourceDTO() { link = null, mime = memoryImage.mime, bytes = memoryImage.bytes };
+            else
+                throw new InvalidOperationException("Unknown ImageSource type");
+        }
+
+        public static ImageSource ToObject(ImageSourceDTO sourceDto)
+        {
+            if (sourceDto.bytes != null)
+                if (sourceDto.mime != null)
+                    return new MemoryImage(sourceDto.bytes, sourceDto.mime);
+                else return new MemoryImage(sourceDto.bytes, "image/jpeg");
+            else if (sourceDto.link != null)
+                return new LinkedImage(sourceDto.link);
+            else
+                throw new InvalidOperationException("ImageSourceDTO must have either bytes or link defined");
         }
     }
 }

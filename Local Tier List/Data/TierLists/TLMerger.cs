@@ -191,10 +191,8 @@ internal class MB_MergeIntoCurrent : MB_MergeIntoCurrentShallow
 
         var res = new TierItem();
 
-        res.name = incoming.name;
-        res.imgMime = String.IsNullOrEmpty(incoming.imgMime) ? current.imgMime : incoming.imgMime;
-        res.imgLocal = String.IsNullOrEmpty(incoming.imgLocal) ? current.imgLocal : incoming.imgLocal;
-        res.img = String.IsNullOrEmpty(incoming.img) ? current.img : incoming.img;
+        res.name = incoming.name; // USE DYNAMIC FOR LEGACY THINGS
+        res.img = incoming.img == null ? current.img : incoming.img;
         res.notes = String.IsNullOrEmpty(incoming.notes) ? current.notes : incoming.notes;
         res.tags = incoming.tags.Length <= 0 ? current.tags : MergeCategories(current.tags, incoming.tags);
         res.parent = incoming.parent != null ? incoming.parent : current.parent;
@@ -378,9 +376,7 @@ internal class MB_SmartMerge : MB_SmartMergeShallow
         var res = new TierItem();
 
         res.name = priority.name;
-        res.imgMime = String.IsNullOrEmpty(priority.imgMime) ? fallback.imgMime : priority.imgMime;
-        res.imgLocal = String.IsNullOrEmpty(priority.imgLocal) ? fallback.imgLocal : priority.imgLocal;
-        res.img = String.IsNullOrEmpty(priority.img) ? fallback.img : priority.img;
+        res.img = priority.img == null ? fallback.img : priority.img;
         res.notes = String.IsNullOrEmpty(priority.notes) ? fallback.notes : priority.notes;
         res.tags = priority.tags.Length <= 0 ? fallback.tags : MergeCategories(fallback.tags, priority.tags);
         res.parent = priority.parent != null ? priority.parent : fallback.parent;

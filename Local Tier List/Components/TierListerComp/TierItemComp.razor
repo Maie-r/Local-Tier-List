@@ -47,20 +47,12 @@ else
 		}
 		else
 		{
-			<img src="@ImageUsed" draggable="false" alt="@item.name" class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") rounded flex-fill m-1" loading="lazy" @onerror="ImageFail" />
+			<img src="@ImageUsed" draggable="false" alt="@item.name" class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") rounded flex-fill m-1 @(item.img is LinkedImage li && li.isLocal ? LinkedImage.SimpliflyLink(li.link) : "")" loading="lazy" @onerror="ImageFail" />
 		}
 	</a>
 }
 
 @*<script src="imageHandler.js"></script>*@
-<script>
-		window.createBlobUrl = (byteArray, mimeType) => {
-		const blob = new Blob([new Uint8Array(byteArray)], { type: mimeType });
-		return URL.createObjectURL(blob);
-	};
-
-	window.revokeBlobUrl = (url) => URL.revokeObjectURL(url);
-</script>
 <style>
 	.OverItem{
 		opacity: 0.5;
@@ -125,21 +117,16 @@ else
 	protected override async Task OnInitializedAsync()
 	{
 		mobile = OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
-		//Logger.LogInformation(id.ToString());
-		/*if (mobile)
-		Logger.LogInformation("U R ON MOBILE!! PHONE USERR!!!! SCREENTOUCHER!!!");
-				else
-			Logger.LogInformation("U R ON DESKTOP!! MOUSE USERRR!!! SCREENCURSOR!!!");//*/
-
 		//Image Priority: Web > Local > Text
 		// for debugging purposes though, prioritizing local
 		if (NoImage) return;
-		if (item.imgBytes != null){
-			ImageUsed = await LoadB64Image(item.imgBytes, "image/jpeg");
-			Logger.LogInformation("LocalImage");
+		if (item.img is MemoryImage mi){
+			ImageUsed = await LoadB64Image(mi.bytes, mi.mime);
 		}
-		else
-			ImageUsed = item.img;
+		else if (item.img is LinkedImage li)
+		{
+			ImageUsed = await LinkedImage.GetMediaUrl(li, JSRuntime);
+		}
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -163,7 +150,7 @@ else
 	void ImageFail()
 	{
 		imageFailed = true;
-		Logger.LogInformation($"Failed to load {item.name}'s image over here");
+		Logger.LogInformation($"[TierItemComp] Failed to load {item.name}'s image over here");
 		StateHasChanged();
 	}
 
@@ -182,7 +169,7 @@ else
 	{
 		if (NoInteraction) return;
 		//Console.Beep();
-		Logger.LogInformation($"Started drag with {item.name} from tier {item.parent.ogname}! {e.Button}");
+		Logger.LogInformation($"[TierItemComp] Started drag with {item.name} from tier {item.parent.ogname}! {e.Button}");
 
 		if (mobile)
 		{
@@ -202,7 +189,7 @@ else
 
 				dragStarted = true;
 
-				Logger.LogInformation("DRAGDELAY: Pointer passed threshold, Dragging!");
+				Logger.LogInformation("[TierItemComp] DRAGDELAY: Pointer passed threshold, Dragging!");
 
 				// comment to disable drag ghost
 				
@@ -216,7 +203,7 @@ else
 			}
 			catch (TaskCanceledException)
 			{
-				Logger.LogInformation("DRAGDELAY: Pointer released early! Editing item instead");
+				Logger.LogInformation("[TierItemComp] DRAGDELAY: Pointer released early! Editing item instead");
 				await OnItemSelect.InvokeAsync(item);
 			}
 		}
@@ -232,7 +219,7 @@ else
 	{
 		if (NoInteraction) return;
 
-		Logger.LogInformation($"Stopped drag!");
+		Logger.LogInformation($"[TierItemComp] Stopped drag!");
 		if (mobile)
 		{
 			dragArmed = false;
@@ -248,19 +235,19 @@ else
 
 	async Task OverHere()
 	{
-		Logger.LogInformation($"pointer over {item.name}");
+		Logger.LogInformation($"[TierItemComp] pointer over {item.name}");
 		await OnItemOver.InvokeAsync(id);
 	}
 
 	async Task OuttaHere()
 	{
-		Logger.LogInformation("AAAH ITS WORKING AGAIN"); // its not btw :( at least not universally
+		Logger.LogInformation("[TierItemComp] AAAH ITS WORKING AGAIN"); // its not btw :( at least not universally
 		await OnItemOut.InvokeAsync();
 	}
 
 	public async Task ForceRefresh() 
 	{
-		Logger.LogInformation("Ahoy refresh");
+		Logger.LogInformation("[TierItemComp] Ahoy refresh");
 		await InvokeAsync(StateHasChanged);
 	}
 

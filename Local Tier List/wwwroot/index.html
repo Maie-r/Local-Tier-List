@@ -30,6 +30,56 @@
 
     <script src="_framework/blazor.webview.js" autostart="false"></script>
 
+    <script>
+        const localmediaCache = new Map();
+
+        window.hasCachedMedia = key => localmediaCache.has(key);
+
+        window.getCachedMedia = key => localmediaCache.get(key);
+
+        window.setMediaSource = async (elementId, streamRef, contentType) => {
+            const arrayBuffer = await streamRef.arrayBuffer();
+            const blob = new Blob([arrayBuffer], { type: contentType });
+            const url = URL.createObjectURL(blob);
+
+            const element = document.getElementById(elementId);
+            element.src = url;
+
+            if (element.tagName.toLowerCase() === "img") {
+                element.onload = () => URL.revokeObjectURL(url);
+            } else {
+                element.onended = () => URL.revokeObjectURL(url);
+            }
+        };
+        window.cacheMedia = async (className, streamRef, contentType) => {
+            const arrayBuffer = await streamRef.arrayBuffer();
+            const blob = new Blob([arrayBuffer], { type: contentType });
+            let url = URL.createObjectURL(blob);
+
+            localmediaCache.set(className, url);
+            return url;
+        }
+        window.setMediaSourceForClass = async (className, streamRef, contentType) => {
+            let url = localmediaCache.get(className);
+
+            if (!url) {
+                url = await window.cacheMedia(className, streamRef, contentType);
+            }
+
+            document.querySelectorAll(`.${className}`).forEach(element => {
+                element.src = url;
+            });
+            return url;
+        };
+
+        window.createBlobUrl = (byteArray, mimeType) => {
+            const blob = new Blob([new Uint8Array(byteArray)], { type: mimeType });
+            return URL.createObjectURL(blob);
+        };
+
+        window.revokeBlobUrl = (url) => URL.revokeObjectURL(url);
+    </script>
+
 </body>
 
 </html>
