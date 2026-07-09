@@ -23,7 +23,7 @@
 			<div class="d-flex flex-nowrap col-12">
 				@if (selecitem.img is LinkedImage li)
 				{
-					<MudTextField Class="center-input thick-outline mx-2" Style="color: white;" @bind-Value="@li.link" TextChanged="@(async () => { selecImage = await GetSelectImage(); UpdateModifiedDate(); })" Label="Image Link" Variant="Variant.Outlined"></MudTextField>
+					<MudTextField Class="center-input thick-outline mx-2" Style="color: white;" @bind-Value="@li.link" TextChanged="@(async () => { selecImage = await GetSelectImage(); Validate("image"); UpdateModifiedDate(); })" Label="Image Link" Variant="Variant.Outlined"></MudTextField>
 					@if (!mobile)
 					{
 						<div class="d-flex flex-nowrap justify-content-center align-items-center me-2">
@@ -59,6 +59,16 @@
 			</div>
 			<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitemtags" TextChanged="@(() => { Validate("tags"); UpdateTags(); })" Label="Tags" Variant="Variant.Outlined" HelperText="(Separated by commas)"></MudTextField>
 			<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitem.notes" TextChanged="@UpdateModifiedDate" Label="Notes" Variant="Variant.Outlined" AutoGrow="true" OnBlur="@(() => Validate("notes"))"></MudTextField>
+			<div class="d-flex mx-auto flex-fill col-12 mt-1">
+				<a class="bg-highlight text-light flex-fill text-center p-2 ms-2 me-1 my-auto rounded clickable" @onclick="() => OnCopy.InvokeAsync(selecitem)"><MudIcon Icon="@Icons.Material.Filled.Upload" Title="Export" />Copy</a>
+				<a class="bg-highlight text-light flex-fill text-center p-2 me-2 ms-1 my-auto rounded clickable" @onclick="Pasted"><MudIcon Icon="@Icons.Material.Filled.Download" Title="Import" /> Paste</a>
+			</div>
+			@if (haspasted)
+			{
+				<div class="d-flex mx-auto flex-fill col-12 mt-2">
+					<a class="bg-highlight text-light flex-fill text-center p-2 mx-2 my-auto rounded clickable" @onclick="() => {OnRollbackPaste.InvokeAsync(); haspasted = false;}"><MudIcon Icon="@Icons.Material.Filled.Undo" Title="Undo Paste" /> Undo Paste</a>
+				</div>
+			}
 			<button class="bg-danger rounded m-2 p-2" @onclick="YouSure">Remove</button>
 		</div>
 	</div>
@@ -90,8 +100,6 @@
 {
 	[Parameter]
 	public required TierItem selecitem { get; set; }
-	[Parameter]
-	public required string selecitemtier { get; set; }
 
 	[Parameter]
 	public EventCallback OnExit { get; set; }
@@ -105,6 +113,12 @@
 	public EventCallback<string> OnLoaded { get; set; }
 	[Parameter]
 	public EventCallback<string> OnError { get; set; }
+	[Parameter]
+	public EventCallback<TierItem> OnCopy { get; set; }
+	[Parameter]
+	public EventCallback OnPaste { get; set; }
+	[Parameter]
+	public EventCallback OnRollbackPaste { get; set; }
 
 	// selected item
 	string selecitemtags = "";
@@ -116,6 +130,7 @@
 	bool yousure;
 
 	bool mobile;
+	bool haspasted = false;
 
 	// --------- INITIAL LOADING
 	protected override async Task OnInitializedAsync()
@@ -157,6 +172,14 @@
 		yousure = !yousure;
 	}
 
+	void Pasted()
+	{
+		var clipboard = CopyPasteApi<TierItem>.GetClipboard();
+		if (clipboard == null) return;
+
+		OnPaste.InvokeAsync(); haspasted = true;
+	}
+
 	// ---------- INPUT VALIDATION AND UPDATE
 	void Validate(string field)
 	{
@@ -181,6 +204,12 @@
 					selecitem.name = selecitem.name.Replace("+", "");
 				}
 				else itemErrorText = "";
+				break;
+			case "image":
+				if (selecitem.img is LinkedImage li)
+				{
+					li.link = li.link.Trim();
+				}
 				break;
 			case "tags":
 				bool cleanup = false;

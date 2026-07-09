@@ -132,9 +132,12 @@
 		</div>
 
 		<TierListComp selected="selected" tl="TierService.tl" showcase="showcase" minimal="minimal" NoImg="NoImg"
-		OnExport="@(() => SnackAlert("Exported Tierlist copied to clipboard"))" OnError="@(new Action<string>(e => SnackError(e)))"
+		OnExport="@(() => SnackAlert("Exported Tierlist copied to clipboard"))" 
+		OnError="@((e) => SnackError(e))"
 		OnLoaded="@(async (e) => await UILoaded(e))" OnLoadingStart="@(async (e) => await UILoading(e))"
-		OnSave="@(async () => await Save())"/>
+		OnSave="@(async () => await Save())"
+		OnItemCopied="@(() => SnackAlert("Item copied!"))"
+		/>
 	}
 
 	<!-- -- -- -- -- -- -- MODALS -- -- -- -- -- -- -- -->

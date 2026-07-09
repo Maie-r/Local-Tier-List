@@ -82,6 +82,7 @@
 							@*<Virtualize Items="GetFilteredItems(pair.Value)" ItemSize="100" TItem="TierItem">*@
 							@foreach (var item in GetFilteredItems(pair.Value)) //<!-- TIER ITEMS -->
 							{
+
 								var idx = pair.Value.items.IndexOf(item);
 								@*<ItemContent Context="item">
 								@{
@@ -158,17 +159,38 @@
 	<!-------------  MODALS  ------------>
 	@if (selecitem != null)
 	{
-		<ItemEdit selecitem="selecitem" selecitemtier="selecitemtier" OnLoaded="OnLoaded" OnLoadingStart="OnLoadingStart" OnExit="Exit" OnDelete="Delete" OnChanged="UpdateModifiedItem"></ItemEdit>
+		<ItemEdit selecitem="selecitem"
+			OnLoaded="OnLoaded" 
+			OnLoadingStart="OnLoadingStart" 
+			OnExit="Exit" 
+			OnDelete="Delete" 
+			OnChanged="UpdateModifiedItem" 
+			OnCopy="(e) => { CopyPasteApi<TierItem>.Copy(e); OnItemCopied.InvokeAsync();}"
+			OnPaste="PasteOnSelected"
+			OnRollbackPaste="UndoPaste">
+		</ItemEdit>
 	}
 	
 	@if (selectier != null)
 	{
-		<SingleTierEdit selected="selected" selectier=selectier OnSave="TrySave" OnExit="Exit" OnModified="UpdateModifiedTier" OnLoaded="OnLoaded" OnLoadingStart="OnLoadingStart"></SingleTierEdit>
+		<SingleTierEdit selected="selected" selectier=selectier 
+			OnSave="TrySave" 
+			OnExit="Exit" 
+			OnModified="UpdateModifiedTier" 
+			OnLoaded="OnLoaded" 
+			OnLoadingStart="OnLoadingStart">
+		</SingleTierEdit>
 	}
 	
 	@if (TierEdit)
 	{
-		<TierEdit selected="selected" OnSave="TrySave" OnExit="Exit" OnModified="UpdateModifiedTier" OnLoaded="OnLoaded" OnLoadingStart="OnLoadingStart"></TierEdit>
+		<TierEdit selected="selected" 
+			OnSave="TrySave" 
+			OnExit="Exit" 
+			OnModified="UpdateModifiedTier" 
+			OnLoaded="OnLoaded" 
+			OnLoadingStart="OnLoadingStart">
+		</TierEdit>
 	}
 </div>
 <div id="drag-ghost-container"></div>
@@ -300,6 +322,9 @@
 	public EventCallback<string> OnExport { get; set; }
 
 	[Parameter]
+	public EventCallback<string> OnItemCopied { get; set; }
+
+	[Parameter]
 	public EventCallback<string> OnError { get; set; }
 
 	[Parameter]
@@ -318,6 +343,8 @@
 	// selected item
 	TierItem? selecitem;
 	string selecitemtier = "";
+	TierItem? selecitembackup;
+	int selecitembackupindex = -1;
 
 	// modal confirm
 	bool yousure;
@@ -374,6 +401,8 @@
 		.Where(i => i != currentItem)
 		.Select(i => i.name)
 		.ToHashSet();
+
+		Logger.LogInformation(existingNames.Count.ToString());
 
 		if (!existingNames.Contains(baseName))
 			return baseName;
@@ -448,6 +477,8 @@
 		if (i == null || i == selecitem) return;
 
 		selecitem = i;
+		selecitembackup = i;
+		selecitembackupindex = i.parent.items.IndexOf(i);
 		selecitemtier = key;
 		selectier = null;
 	}
@@ -463,6 +494,50 @@
 			selecitem = null;
 			selecitemtier = "";
 		}
+	}
+
+	void PasteOnSelected()
+	{
+		var clipboard = CopyPasteApi<TierItem>.Paste(selected.tiers[selecitemtier].items, selecitembackupindex);
+		if (clipboard == null) return;
+
+		clipboard.parent = selected.tiers[selecitemtier];
+		selecitem = clipboard;
+	}
+
+	void UndoPaste()
+	{
+		Logger.LogInformation(selecitem.parent.items.IndexOf(selecitem).ToString());
+		selecitem.parent.items[selecitembackupindex] = selecitembackup;
+		selecitem = selecitembackup;
+	}
+
+	async Task Exit()
+	{
+		await OnLoadingStart.InvokeAsync("Saving Item...");
+		if (selecitem != null)
+		{
+			selecitem.Renderversion++; // force image refresh
+			foreach (var item in selecitem.parent.items)
+			{
+				Logger.LogInformation(item.name);
+			}
+			Logger.LogInformation(selecitem.parent.items.Contains(selecitem).ToString());
+			selecitem.name = GetUniqueName(selecitem, selecitem.name);
+		}
+		selecitem = null;
+		selecitembackup = null;
+		selecitembackupindex = -1;
+		selectier = null;
+		TierEdit = false;
+		selecitemtier = "";
+
+		await TrySave();
+
+		StateHasChanged();
+		//await tempcomponentref?.ForceRefresh();
+
+		await OnLoaded.InvokeAsync("Item Saved!");
 	}
 
 	// ------------ ITEM FILTERING
@@ -545,28 +620,6 @@
 			selected.ModifiedNow(selected.tiers[tier]);
 	}
 
-	async Task Exit()
-	{
-		await OnLoadingStart.InvokeAsync("Saving Item...");
-		//var tempcomponentref = selecitem.ComponentInstance;
-		if (selecitem != null)
-		{
-			selecitem.Renderversion++; // force image refresh
-			selecitem.name = GetUniqueName(selecitem, selecitem.name);
-		}
-		selecitem = null;
-		selectier = null;
-		TierEdit = false;
-		selecitemtier = "";
-
-		await TrySave();
-
-		StateHasChanged();
-		//await tempcomponentref?.ForceRefresh();
-
-		await OnLoaded.InvokeAsync("Item Saved!");
-	}
-
 	// ------------ NEW ITEM & TIER
 	void Add(string key)
 	{
@@ -574,8 +627,7 @@
 		TierItem temp = new TierItem(defaultItemName);
 		selected.tiers[key].Add(temp);
 		temp.parent = selected.tiers[key];
-		selecitem = temp;
-		selecitemtier = key;
+		Select(temp);
 		UpdateModifiedItem();
 		//await TrySave();
 	}

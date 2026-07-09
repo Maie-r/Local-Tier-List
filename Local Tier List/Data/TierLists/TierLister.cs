@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Local_Tier_List.Components.TierListerComp;
 using Microsoft.JSInterop;
 using Microsoft.Maui.Storage;
+using MaieBlazorLib;
 using static MudBlazor.CategoryTypes;
 
 namespace Local_Tier_List.Data.TierLists
@@ -183,7 +184,7 @@ namespace Local_Tier_List.Data.TierLists
         }
     }
 
-    public class TierItem
+    public class TierItem : IDuplicable<TierItem>
     {
         public string name { get; set; }
         public ImageSource img { get; set; }
@@ -213,6 +214,13 @@ namespace Local_Tier_List.Data.TierLists
             return $"TierItem {name}, img link: {img}. {tags.Length} tags" + (parent == null ? "No parent" : $"parent {parent!.name}");
         }
 
+        public TierItem Clone()
+        {
+            var c = this.MemberwiseClone() as TierItem;
+            c.img = this.img.Clone();
+            return c;
+        }
+
         //DEPRECATED
         public TierItem(string both, Tier parent)
         {
@@ -224,7 +232,13 @@ namespace Local_Tier_List.Data.TierLists
         }
     }
 
-    public abstract class ImageSource;
+    public abstract class ImageSource : IDuplicable<ImageSource>
+    {
+        public ImageSource Clone()
+        {
+            return this.MemberwiseClone() as ImageSource;
+        }
+    }
 
     public class LinkedImage : ImageSource
     {

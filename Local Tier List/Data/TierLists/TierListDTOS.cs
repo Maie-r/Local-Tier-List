@@ -366,6 +366,7 @@ namespace Local_Tier_List.Data.TierLists
             TierItemDTO tiDTO = new TierItemDTO();
             tiDTO.name = tierItem.name;
             tiDTO.img = ImageSourceDTO.ToDTO(tierItem.img);
+            if (tiDTO.img.link != null) tiDTO.img.link = tiDTO.img.link.Trim();
             tiDTO.tags = tierItem.tags;
             tiDTO.lastModified = tierItem.lastModified.ToString("O");
             if (tiDTO.tags == null) tiDTO.tags = Array.Empty<string>();
