@@ -132,57 +132,65 @@ namespace Local_Tier_List.Data.TierLists
         static void FixLegacyData(JsonObject root, int legacyversion)
         {
             Debug.WriteLine("Patching legacy data");
-            switch (legacyversion)
+            for (; legacyversion < TierListDTO.CurrentStructureVersion; legacyversion++)
             {
-                case 1:
-                    foreach (JsonObject tier in root["tiers"]!.AsArray())
-                    {
-                        foreach (JsonObject item in tier["items"]!.AsArray().Cast<JsonObject>())
-                        {
-                            JsonObject? newImg = null;
-                            if (item.ContainsKey("imgBytes") && item["imgBytes"] != null) // prioritizing this since they can contain unrecoverable data
-                            {
-                                newImg = new JsonObject
-                                {
-                                    ["bytes"] = item["imgBytes"],
-                                    ["mime"] = item.ContainsKey("imgMime") ? item["imgMime"] : "image/jpeg"
-                                };
-                            }
-                            else if (item.ContainsKey("imgLocal") && item["imgLocal"] != null)
-                            {
-                                newImg = new JsonObject
-                                {
-                                    ["link"] = item["imgLocal"]
-                                };
+                Debug.WriteLine($"Patching legacy data from version {legacyversion} to {legacyversion + 1}");
 
-                            }
-                            else if (item.ContainsKey("img") && item["img"] != null)
+                switch (legacyversion)
+                {
+                    case 1:
+                        foreach (JsonObject tier in root["tiers"]!.AsArray())
+                        {
+                            foreach (JsonObject item in tier["items"]!.AsArray().Cast<JsonObject>())
                             {
-                                if (item["img"] is not JsonObject)
+                                JsonObject? newImg = null;
+                                if (item.ContainsKey("imgBytes") && item["imgBytes"] != null) // prioritizing this since they can contain unrecoverable data
                                 {
                                     newImg = new JsonObject
                                     {
-                                        ["link"] = item["img"]?.GetValue<string>()
+                                        ["bytes"] = item["imgBytes"],
+                                        ["mime"] = item.ContainsKey("imgMime") ? item["imgMime"] : "image/jpeg"
                                     };
                                 }
-                            }
+                                else if (item.ContainsKey("imgLocal") && item["imgLocal"] != null)
+                                {
+                                    newImg = new JsonObject
+                                    {
+                                        ["link"] = item["imgLocal"]
+                                    };
 
-                            if (newImg != null)
-                            {
-                                item.Remove("img");
-                                item["img"] = newImg;
-                            }
+                                }
+                                else if (item.ContainsKey("img") && item["img"] != null)
+                                {
+                                    if (item["img"] is not JsonObject)
+                                    {
+                                        newImg = new JsonObject
+                                        {
+                                            ["link"] = item["img"]?.GetValue<string>()
+                                        };
+                                    }
+                                }
 
-                            item.Remove("imgLocal");
-                            item.Remove("imgBytes");
-                            item.Remove("imgMime");
+                                if (newImg != null)
+                                {
+                                    item.Remove("img");
+                                    item["img"] = newImg;
+                                }
+
+                                item.Remove("imgLocal");
+                                item.Remove("imgBytes");
+                                item.Remove("imgMime");
+                            }
                         }
-                    }
-                    break;
-                default:
-                    throw new InvalidOperationException($"Unsupported legacy version: {legacyversion}");
+                        break;
+                    case 2:
+                        // No changes needed for version 3, the tierlist IDs generate themselves when possible
+                        break;
+                    default:
+                        throw new InvalidOperationException($"Unsupported legacy version: {legacyversion}");
+                }
             }
-            
+
         }
 
 
@@ -255,7 +263,8 @@ namespace Local_Tier_List.Data.TierLists
 
     class TierListDTO
     {
-        public static int CurrentStructureVersion = 2; // This is what will be checked for handling legacy data. Please update whenever changes are made to the structure
+        public static int CurrentStructureVersion = 3; // This is what will be checked for handling legacy data. Please update whenever changes are made to the structure
+        public string id { get; set; }
         public string name { get; set; }
         public List<TierDTO> tiers { get; set; }
         public string? lastModified { get; set; }
@@ -265,6 +274,7 @@ namespace Local_Tier_List.Data.TierLists
         public static TierListDTO ToDTO(TierList tierlist)
         {
             TierListDTO tlDTO = new TierListDTO();
+            tlDTO.id = tierlist.Id.ToString("N");
             tlDTO.name = tierlist.name;
             tlDTO.color = tierlist.color;
             tlDTO.tiers = new List<TierDTO>();
@@ -278,6 +288,15 @@ namespace Local_Tier_List.Data.TierLists
         public static TierList ToObject(TierListDTO tierlistDTO)
         {
             TierList tl = new TierList(tierlistDTO.name);
+            if (Guid.TryParse(tierlistDTO.id, out Guid guid))
+            {
+                tl.Id = guid;
+            }
+            else
+            {
+                Debug.WriteLine("ERROR IMPORTING TIERLIST: Invalid GUID format, generating new GUID.");
+                tl.Id = Guid.NewGuid();
+            }
             tl.tiers = new Dictionary<string, Tier>();
             tl.color = tierlistDTO.color;
             foreach (TierDTO tDTO in tierlistDTO.tiers)

@@ -68,10 +68,12 @@ namespace Local_Tier_List.Data.TierLists
 
     public class TierList
     {
-        public Dictionary<string, Tier> tiers;
+        public Guid Id { get; set; } = Guid.NewGuid(); // Not really used in the inner components, but can be useful for an outsider app
         public string name;
         public string color { get; set; } = "#a050dc";
         public DateTime lastModified { get; set; } = DateTime.UtcNow;
+
+        public Dictionary<string, Tier> tiers;
 
         public TierList(string name)
         {
