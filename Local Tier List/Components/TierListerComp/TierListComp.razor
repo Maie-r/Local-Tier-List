@@ -402,8 +402,6 @@
 		.Select(i => i.name)
 		.ToHashSet();
 
-		Logger.LogInformation(existingNames.Count.ToString());
-
 		if (!existingNames.Contains(baseName))
 			return baseName;
 
@@ -507,7 +505,7 @@
 
 	void UndoPaste()
 	{
-		Logger.LogInformation(selecitem.parent.items.IndexOf(selecitem).ToString());
+		//Logger.LogInformation(selecitem.parent.items.IndexOf(selecitem).ToString());
 		selecitem.parent.items[selecitembackupindex] = selecitembackup;
 		selecitem = selecitembackup;
 	}
@@ -518,10 +516,10 @@
 		if (selecitem != null)
 		{
 			selecitem.Renderversion++; // force image refresh
-			foreach (var item in selecitem.parent.items)
+			/*foreach (var item in selecitem.parent.items)
 			{
 				Logger.LogInformation(item.name);
-			}
+			}*/
 			Logger.LogInformation(selecitem.parent.items.Contains(selecitem).ToString());
 			selecitem.name = GetUniqueName(selecitem, selecitem.name);
 		}

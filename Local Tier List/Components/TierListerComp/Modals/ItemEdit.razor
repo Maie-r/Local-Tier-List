@@ -131,6 +131,7 @@
 
 	bool mobile;
 	bool haspasted = false;
+	bool loaded = false;
 
 	// --------- INITIAL LOADING
 	protected override async Task OnInitializedAsync()
@@ -143,6 +144,7 @@
 		if (firstrender)
 		{
 			await SetLect();
+			loaded = true;
 			StateHasChanged();
 		}
 	}
@@ -183,6 +185,7 @@
 	// ---------- INPUT VALIDATION AND UPDATE
 	void Validate(string field)
 	{
+		if (!loaded) return;
 		itemErrorText = "";
 		Logger.LogInformation("[ItemEdit] Validating " + field);
 		switch (field)
@@ -227,6 +230,7 @@
 				}
 				if (cleanup)
 				{
+					Logger.LogInformation("Cleaning up tags");
 					selecitemtags = selecitemtags.Trim();
 					selecitemtags = selecitemtags.Replace("+", "");
 					selecitemtags = selecitemtags.Replace(", -", ", ");
@@ -237,6 +241,7 @@
 				}
 				break;
 			case "notes":
+				if (String.IsNullOrEmpty(selecitem.notes)) break;
 				var sanitizer = new HtmlSanitizer();
 				sanitizer.AllowedTags.Clear();
 				string safe = sanitizer.Sanitize(selecitem.notes);
@@ -252,6 +257,7 @@
 
 	async Task UpdateTags()
 	{
+		if (!loaded) return;
 		if (selecitem == null) return;
 		await OnLoadingStart.InvokeAsync("Updating Tags...");
 		string[] tags = selecitemtags.Split(',');

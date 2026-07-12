@@ -18,85 +18,43 @@
 				<MudIcon Icon="@Icons.Material.Filled.Folder" Title="Data Folder"/>
 				</button>
 		}
-		<div class="row mx-1 flex-row justify-content-start col-12 flex-fill flex-wrap d-flex">
-			@if (lists!.Count <= 0)
-			{
-				<div class="col-sm-12 col-lg-4 mx-2 flex-column justify-content-center d-flex">
-					<h5> There are no saved TierLists, create one with the "New TierList" button!. </h5>
-				</div>
-			}
-			else
-			{
-				<div class="form-check form-switch">
-					<input class="form-check-input" type="checkbox" id="showcaseform"
-						   @onchange="() => Toggle(ref editTierlists)">
-					<label class="form-check-label" for="showcaseform">
-						Edit Tierlists
-					</label>
-				</div>
-				@for (int local = 0; local < lists.Count; local++)
-				{
-					int i = local;
-
-					<div class="row col-sm-4 col-md-3 col-lg-2 mx-0 my-1 d-flex flex-wrap">
-						<div class="row p-0 col-12 d-flex flex-fill">
-							<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
-								@if (!editTierlists)
-								{
-									<a class="col-12 btn text-center justify-content-center p-2 rounded clickableOuter align-content-center"
-									   style="background-color: @(String.IsNullOrEmpty(lists[i].color) ? "var(--highlight-color)" : lists[i].color);
-														   color: @(String.IsNullOrEmpty(lists[i].color) ? "white" : GlobalStyleFunctions.GetMostReadableTextColor(lists[i].color))"
-									   @onclick="() => Select(lists[i])">
-										@lists[i].name
-									</a>
-								}
-								else
-								{
-									<a class="col-10 btn text-center justify-content-center p-2 rounded draggableOuter align-content-center" draggable="true"
-									   style="background-color: @(String.IsNullOrEmpty(lists[i].color) ? "var(--highlight-color)" : lists[i].color);
-											  outline: dashed 2px; outline-color: @(String.IsNullOrEmpty(lists[i].color) ? "var(--highlight-color)" : lists[i].color);
-                                              color: @(String.IsNullOrEmpty(lists[i].color) ? "white" : GlobalStyleFunctions.GetMostReadableTextColor(lists[i].color));
-											  opacity: @(DragDropApi<TierList>.GetOver() == lists[i] ? "0.5" : "1")"
-									   @ondragover="() => DragDropApi<TierList>.OverHere(lists, i)"
-									   @ondragstart="async (e) => await TLOnPress(e, i)"
-									   @onmousedown="async (e) => await TLOnPress(e, i)"
-									   @ondragend="async () => await StopDrag() ">
-										@lists[i].name
-									</a>
-									<button class="text-light col-2 p-2 ms-1 btn bg-danger clickable rounded flex-nowrap align-content-center" @onclick="() => YouSure(lists[i])">✖</button>
-								}
-							</div>
-						</div>
-					</div>
-				}
-			}
-			<div class="row col-sm-4 col-md-3 col-lg-2 mx-0 my-1 d-flex flex-wrap">
-				<div class="row p-0 col-12 d-flex flex-fill">
-					<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
-						<h5 class="clickableOuter flex-fill p-0 m-0 text-center rounded btn template align-content-center text-light" style="min-height: 40px" @onclick="NewTierList"> New Tierlist </h5>
-					</div>
-				</div>
-			</div>
+		<div class="form-check form-switch">
+			<input class="form-check-input" type="checkbox" id="showcaseform" checked="@editTierlists"
+				   @onchange="() => editTierlists = !editTierlists">
+			<label class="form-check-label" for="showcaseform">
+				Edit Mode
+			</label>
 		</div>
-		<div class="d-flex mx-2 my-2 col-12 col-md-4">
+		<TLList Folder="rootfolder"
+				editMode="editTierlists"
+				mobile="mobile"
+				IsRoot="true"
+				OnSelect="Select"
+				OnNewTierList="() => showcase = false"
+				OnChangesMade="Save"
+				OnDeletedItems="(e) => { if (e.Any((e) => e == selected)) selected = null; }"
+				OnFolderOpened="(e) => CurrentFolder = e"
+		>
+		</TLList>
+		<div class="d-flex mx-2 my-2 col-12 col-md-4"> <!-- IMPORT EXPORT MERGE BUTTONS -->
 			<div class="row col-sm-6 col-md-2 col-lg-1 mx-2 my-1 d-flex flex-fill flex-wrap">
 				<div class="row p-0 col-12 d-flex flex-fill">
 					<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
-						<h5 class="clickableOuter flex-fill p-1 m-0 text-center rounded btn bg-primary align-content-center text-light" @onclick="@(() => OpenModal("Import"))"> <MudIcon Icon="@Icons.Material.Filled.Download" Title="Import" /> Import Tierlists </h5>
+						<h5 class="clickableOuter flex-fill p-1 m-0 text-center rounded btn bg-primary align-content-center text-light" @onclick="@(() => OpenModal(ModalType.Import))"> <MudIcon Icon="@Icons.Material.Filled.Download" Title="Import" /> Import Tierlists </h5>
 					</div>
 				</div>
 			</div>
 			<div class="row col-sm-6 col-md-2 col-lg-1 mx-2 my-1 d-flex flex-fill flex-wrap">
 				<div class="row p-0 col-12 d-flex flex-fill">
 					<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
-						<h5 class="clickableOuter flex-fill p-2 m-0 text-center rounded btn bg-primary align-content-center text-light" @onclick="ExportAll"> <MudIcon Icon="@Icons.Material.Filled.Upload" Title="Export" /> Export All Tierlists </h5>
+						<h5 class="clickableOuter flex-fill p-2 m-0 text-center rounded btn bg-primary align-content-center text-light" @onclick="() => OpenModal(ModalType.Export)"> <MudIcon Icon="@Icons.Material.Filled.Upload" Title="Export" /> Export All Tierlists </h5>
 					</div>
 				</div>
 			</div>
 			<div class="row col-sm-6 col-md-2 col-lg-1 mx-2 my-1 d-flex flex-fill flex-wrap">
 				<div class="row p-0 col-12 d-flex flex-fill">
 					<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
-						<h5 class="clickableOuter flex-fill p-2 m-0 text-center rounded btn bg-primary align-content-center text-light" @onclick="@(() => OpenModal("Merge"))"> MERGE TWO (DEBUG) </h5>
+						<h5 class="clickableOuter flex-fill p-2 m-0 text-center rounded btn bg-primary align-content-center text-light" @onclick="@(() => OpenModal(ModalType.Merge))"> MERGE TWO (DEBUG) </h5>
 					</div>
 				</div>
 			</div>
@@ -107,7 +65,7 @@
 		<h5 class="ms-4">Display Settings:</h5>
 		<div class="d-flex flex-row gap-3 p-2 darken-25 rounded">
 			<div class="form-check form-switch">
-				<input class="form-check-input" type="checkbox" id="showcaseform"
+				<input class="form-check-input" type="checkbox" id="showcaseform" checked="@showcase"
 					   @onchange="() => Toggle(ref showcase)">
 				<label class="form-check-label" for="showcaseform">
 					Showcase Mode
@@ -147,90 +105,83 @@
 			<h5 class="d-flex col-12 align-items-center align-content-center mx-auto justify-content-center">@LoadingMessage</h5>
 		</div>
 	}
-
-	@if (yousure)
+	@switch (CurrentModal)
 	{
-		<div class="maiedal d-flex flex-column text-center justify-content-center">
-			<div class="p-2 darken-95 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-6">
-				<p> Are you sure you want to permanently remove this tierlist? All tiers and items registered within will be deleted! </p>
-				<div class="d-flex flex-row flex-wrap mx-auto">
-					<button class="mx-2 btn text-light" @onclick="YouSure">No</button>
-					<button class="mx-2 btn text-danger" @onclick="Delete">Yes, remove it and all items within</button>
+		case ModalType.Import:
+			{
+				<div class="maiedal d-flex flex-column text-center justify-content-center">
+					<div class="p-4 darken-85 bgblur-5 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
+						<p> Paste below the JSON string of the Tierlist(s) you want to import! </p>
+						<textarea class="font-monospace bg-dark text-light col-12 mb-2" style="height:200px;" @bind="importString"></textarea>
+						<div>
+							<p class="text-danger">@importErr</p>
+						</div>
+						<div class="form-check form-switch text-start mx-3 mb-3">
+							<input class="form-check-input" type="checkbox" id="ireplace"
+								   @onchange="() => Toggle(ref ImportReplace)">
+							<label class="form-check-label" for="ireplace">
+								Replace current Tierlists
+							</label>
+						</div>
+						<div class="d-flex flex-row flex-wrap mx-auto">
+							<button class="mx-2 border-1 border-white text-light rounded btn p-2" @onclick="() => CurrentModal = ModalType.None">Cancel</button>
+							<button class="mx-2 bg-highlight rounded btn p-2 text-light" @onclick="ImportTierLists">Import</button>
+						</div>
+					</div>
 				</div>
-			</div>
-		</div>
-
-	}
-	@if (ImportMenu)
-	{
-		<div class="maiedal d-flex flex-column text-center justify-content-center">
-			<div class="p-4 darken-85 bgblur-5 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
-				<p> Paste below the JSON string of the Tierlist(s) you want to import! </p>
-				<textarea class="font-monospace bg-dark text-light col-12 mb-2" style="height:200px;" @bind="importString"></textarea>
-				<div>
-					<p class="text-danger">@importErr</p>
+			}
+			break;
+		case ModalType.Merge:
+			{
+				<div class="maiedal d-flex flex-column text-center justify-content-center">
+					<div class="p-4 darken-85 bgblur-5 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
+						<p> Paste below the JSON string of the Tierlist(s) you want to merge! </p><br />
+						<p> Current: </p>
+						<textarea class="font-monospace bg-dark text-light col-12 mb-2" style="height:200px;" @bind="merge1String"></textarea>
+						<p> Incoming: </p>
+						<textarea class="font-monospace bg-dark text-light col-12 mb-2" style="height:200px;" @bind="merge2String"></textarea>
+						<div>
+							<p class="text-danger">@mergeErr</p>
+						</div>
+						<div class="my-5">
+							<MudSelect @bind-Value="currentMergeBehaviour" Label="Merging Behaviour">
+								@foreach (var kv in MergeOptions)
+								{
+									<MudSelectItem Value="kv.Value">@kv.Key</MudSelectItem>
+								}
+							</MudSelect>
+						</div>
+						<div class="d-flex flex-row flex-wrap mx-auto">
+							<button class="mx-2 border-1 border-white text-light rounded btn p-2" @onclick="() => CurrentModal = ModalType.None">Cancel</button>
+							<button class="mx-2 bg-highlight rounded btn p-2 text-light" @onclick="MergeTierLists">Merge</button>
+						</div>
+					</div>
 				</div>
-				<div class="form-check form-switch text-start mx-3 mb-3">
-					<input class="form-check-input" type="checkbox" id="ireplace"
-						   @onchange="() => Toggle(ref ImportReplace)">
-					<label class="form-check-label" for="ireplace">
-						Replace current Tierlists
-					</label>
+			}
+			break;
+		case ModalType.Export:
+			{
+				<div class="maiedal d-flex flex-column text-center justify-content-center">
+					<div class="p-4 darken-85 bgblur-5 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
+						<p> Which Tierlists do you want to export? </p>
+						<div class="d-flex flex-column flex-wrap mx-auto justify-content-center">
+							<button class="mx-2 my-1 bg-highlight rounded btn p-2 text-light" @onclick="ExportCurrentFolder">Export Tierlists from the Open Folder</button>
+							<button class="mx-2 my-1 bg-highlight rounded btn p-2 text-light" @onclick="ExportAll">Export All Tierlists</button>
+							<button class="mx-2 my-1 border-1 border-white text-light rounded btn p-2" @onclick="() => CurrentModal = ModalType.None">Cancel</button>
+						</div>
+					</div>
 				</div>
-				<div class="d-flex flex-row flex-wrap mx-auto">
-					<button class="mx-2 border-1 border-white text-light rounded btn p-2" @onclick="() => ImportMenu = false">Cancel</button>
-					<button class="mx-2 bg-highlight rounded btn p-2 text-light" @onclick="ImportTierLists">Import</button>
-				</div>
-			</div>
-		</div>
-	}
-	@if (MergeMenu)
-	{
-		<div class="maiedal d-flex flex-column text-center justify-content-center">
-			<div class="p-4 darken-85 bgblur-5 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
-				<p> Paste below the JSON string of the Tierlist(s) you want to merge! </p><br />
-				<p> Current: </p>
-				<textarea class="font-monospace bg-dark text-light col-12 mb-2" style="height:200px;" @bind="merge1String"></textarea>
-				<p> Incoming: </p>
-				<textarea class="font-monospace bg-dark text-light col-12 mb-2" style="height:200px;" @bind="merge2String"></textarea>
-				<div>
-					<p class="text-danger">@mergeErr</p>
-				</div>
-				<div class="my-5">
-						<MudSelect @bind-Value="currentMergeBehaviour" Label="Merging Behaviour">
-							@foreach (var kv in MergeOptions)
-							{
-								<MudSelectItem Value="kv.Value">@kv.Key</MudSelectItem>
-							}
-						</MudSelect>
-				</div>
-				<div class="d-flex flex-row flex-wrap mx-auto">
-					<button class="mx-2 border-1 border-white text-light rounded btn p-2" @onclick="() => MergeMenu = false">Cancel</button>
-					<button class="mx-2 bg-highlight rounded btn p-2 text-light" @onclick="MergeTierLists">Merge</button>
-				</div>
-			</div>
-		</div>
-	}
-	@if (EditSelected != null)
-	{
-		<div class="maiedal d-flex flex-column text-center justify-content-center">
-			<div class="p-4 darken-85 bgblur-5 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
-				<div class="d-flex p-2 text-end justify-content-end">
-					<a class="clickable" @onclick="async () => { EditSelected = null; await Save(); }">✖</a>
-				</div>
-				<MudColorPicker Label="TierList Color" @bind-Text="EditSelected.color" Style="@($"color: {EditSelected.color};")" Placeholder="Select Color" />
-			</div>
-		</div>
+			}
+			break;
 	}
 </div>
 
 
 @code
 {
-	List<TierList>? lists;
+	TLFolder rootfolder;
+	TLFolder CurrentFolder;
 	TierList? selected;
-
-	TierList? selected2;
 
 	string importString = "";
 	string merge1String = "";
@@ -238,8 +189,17 @@
 	string importErr = "";
 	string mergeErr = "";
 
-	bool mobile, showcase, minimal, NoImg, yousure, MergeMenu, editTierlists;
-	bool ImportMenu, ImportReplace;
+	bool mobile, minimal, NoImg, editTierlists, ImportReplace;
+	bool showcase = true;
+
+	ModalType CurrentModal = ModalType.None;
+
+	enum ModalType {
+		Import,
+		Export,
+		Merge,
+		None,
+	}
 
 	// merging
 	MergeBehaviour currentMergeBehaviour = MergeBehaviourTable.SmartMerge;
@@ -251,8 +211,6 @@
 		{ "Priority on Incoming (Shallow)", MergeBehaviourTable.MergeIntoCurrentShallow },
 	};
 
-	TierList? EditSelected;
-
 	bool Loading = false;
 	string LoadingMessage = "Loading...";
 
@@ -262,9 +220,10 @@
 	protected override async Task OnInitializedAsync()
 	{
 		mobile = OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
-		lists = TierService.TierLists; // yes this loads TierLister too
-		if (lists == null)
-			lists = new List<TierList>();
+		rootfolder = TierService.RootFolder;
+		CurrentFolder = rootfolder;
+		if (rootfolder.Folders.Count <= 0 || rootfolder.Tierlists.Count <= 0)
+			editTierlists = true;
 
 	}
 
@@ -293,66 +252,6 @@
 		catch (OperationCanceledException) { /* debounced away, that's fine */ }
 	}
 
-	// Mobile drag threshold
-	CancellationTokenSource? dragDelayCts;
-	bool dragArmed = false;
-	bool dragStarted = false;
-	int dragthreshold = 200; // ms btw this isn't functional rn, OnPress only detects touch, not the drag. Drag is detected with onDrag
-	ElementReference elementRef;
-
-	async Task TLOnPress(MouseEventArgs e, int index)
-	{
-		Logger.LogInformation("Ahoy!");
-		if (mobile)
-		{
-			Logger.LogInformation("Ahoy2!");
-			dragStarted = false;
-			dragArmed = true;
-
-			dragDelayCts?.Cancel();
-			dragDelayCts = new CancellationTokenSource();
-
-			try
-			{
-				// long-press threshold (tweak this)
-				await Task.Delay(dragthreshold, dragDelayCts.Token);
-
-				if (!dragArmed)
-					return;
-
-				dragStarted = true;
-				Logger.LogInformation("DRAGDELAY: Pointer passed threshold, Dragging!");
-
-				DragDropApi<TierList>.StartDrag(lists, index);
-			}
-			catch (TaskCanceledException)
-			{
-				Logger.LogInformation("DRAGDELAY: Pointer released early! Editing item instead");
-				EditSelected = lists[index];
-			}
-		}
-		else if (e.Buttons == 2) // right click
-			EditSelected = lists[index];
-		else DragDropApi<TierList>.StartDrag(lists, index);
-	}
-
-	async Task StopDrag()
-	{
-		Logger.LogInformation($"Stopped drag!!");
-		if (mobile)
-		{
-			dragArmed = false;
-			dragDelayCts?.Cancel();
-
-			dragStarted = false;
-		}
-		if (DragDropApi<TierList>.StopDrag()) 
-		{
-			Logger.LogInformation($"AAAAAAAAAAAAA");
-			await Save();
-		} else Logger.LogInformation($"bbbbbbbbbbbb");
-	}
-
 	// -------- TIERLIST MANAGEMENT
 	async Task Select(TierList l)
 	{
@@ -367,57 +266,15 @@
 		}
 	}
 
-	void NewTierList()
-	{
-		TierService.TierLists.Add(new TierList($"Tierlist {TierService.TierLists.Count + 1}", true));
-		Select(TierService.TierLists.Last());
-	}
-
-	async Task Delete()
-	{
-		if (selected == selected2)
-		{
-			selected = null;
-		}
-		if (selected2 == null) return;
-		TierService.TierLists.Remove(selected2);
-		await TierService.SaveAll();
-		yousure = false;
-	}
-
 	// -------- MODAL HANDLING
-	void YouSure(TierList l)
+	async Task OpenModal(ModalType type)
 	{
-		if (yousure)
+		if (type is ModalType.Export && rootfolder.Folders.Count <= 0)
 		{
-			yousure = false;
-			selected2 = null;
+			await ExportAll();
+			return;
 		}
-		else
-		{
-			yousure = true;
-			selected2 = l;
-		}
-	}
-	void YouSure()
-	{
-		if (yousure)
-		{
-			yousure = false;
-			selected2 = null;
-		}
-	}
-	void OpenModal(string type)
-	{
-		switch (type)
-		{
-			case "Import":
-				ImportMenu = true;
-				break;
-			case "Merge":
-				MergeMenu = true;
-				break;
-		}
+		CurrentModal = type;
 	}
 	void Toggle(ref bool t)
 	{
@@ -426,9 +283,22 @@
 	}
 
 	// -------- IMPORT, EXPORT, MERGE
+	async Task ExportCurrentFolder()
+	{
+		var used = CurrentFolder.Tierlists;
+		await Export(used);
+	}
 	async Task ExportAll()
 	{
+		var used = TierService.TierLists;
+		await Export(used);
+	}
+
+	async Task Export(List<TierList> tierlists)
+	{
 		var json = TierService.tl?.ExportJson() ?? string.Empty;
+		json = TierListSaveData.ExportTierList(tierlists);
+		Logger.LogInformation(TierService.tl.TierLists.Count.ToString());
 		if (string.IsNullOrEmpty(json))
 		{
 			Logger.LogWarning("ExportAll: no JSON produced from TierService.tl.ExportJson()");
@@ -439,11 +309,11 @@
 		try
 		{
 #if ANDROID || WINDOWS || IOS || MACCATALYST
-	// Use native MAUI clipboard when running as a MAUI app (Android, Windows, iOS, MacCatalyst).
-	await Clipboard.SetTextAsync(json);
+			// Use native MAUI clipboard when running as a MAUI app (Android, Windows, iOS, MacCatalyst).
+			await Clipboard.SetTextAsync(json);
 #else
-			// Fallback for browser/web: use navigator.clipboard via JS interop.
-			await JS.InvokeVoidAsync("navigator.clipboard.writeText", json);
+	// Fallback for browser/web: use navigator.clipboard via JS interop.
+	await JS.InvokeVoidAsync("navigator.clipboard.writeText", json);
 #endif
 			Logger.LogInformation("Exported JSON copied to clipboard.");
 			SnackAlert("TierLists Data copied to clipboard.");
@@ -477,16 +347,24 @@
 				{
 					if (ImportReplace)
 					{
-						TierService.TierLists.Clear();
+						TierService.TierLists.RemoveAll(e => CurrentFolder.Tierlists.Any((f) => e.Id == f.Id));
+						CurrentFolder.Tierlists.Clear();
 					}
+					var Ids = TierService.TierLists.Select(e => e.Id).ToHashSet();
 					foreach (var tl in imported)
 					{
+						if (Ids.Contains(tl.Id))
+						{
+							// I guess I could add a merge here but for now I'll just re-do the ID
+							tl.Id = Guid.NewGuid();
+						}
 						TierService.TierLists.Add(tl);
+						CurrentFolder.Tierlists.Add(tl);
 					}
 					await TierService.SaveAll();
-					lists = TierService.TierLists;
+					//lists = TierService.TierLists;
 					importErr = "";
-					ImportMenu = false;
+					OpenModal(ModalType.None);
 				}
 				else
 				{
@@ -495,7 +373,7 @@
 			}
 			catch (Exception e)
 			{
-				importErr = e.Message;
+				//importErr = e.Message;
 			}
 		}
 	}
@@ -507,7 +385,9 @@
 			var t1 = TierService.Import(merge1String);
 			var t2 = TierService.Import(merge2String);
 			var t3 = TLMerger.MergeTierLists(currentMergeBehaviour, t1[0], t2[0]);
+			CurrentFolder.Tierlists.Add(t3);
 			TierService.TierLists.Add(t3);
+			OpenModal(ModalType.None);
 		}
 		else mergeErr = "Please fill both fields";
 	}

@@ -1,33 +1,36 @@
-Overall Status: Main requisites functional on Desktop and Android, still could use some QA to find unhandled errors. 
+Overall Status: Requisites functional on Desktop and Android, still could use some QA to find unhandled errors. 
 Remaining work is improvement only with no deadlines
-
-Local Image Picking:
-{
-	Windows
-	(!) Mobile
-}
 
 Add a Loading Service and Loading Screens
 
-Tierlist Organizing {
-	(!) Coloring 
-	(!) Ordering 
-	Foldering
-}
+Add more merging options
 
 Optimize Mobile performance
 {
 	Drag Ghost operation
-	Tier Edit open delay
+	Tier Edit open delay (Add a lighter color picker)
 	(!) Slight scrolling lag on showcase mode (due to popups) 
 }
 
 DONE ------------
 
-Github: (!)
+(!) Local Image Picking:
 {
-	Make an actual Readme, with images of both devices. (!)
-	Add Desktop and Android Releases. (!)
+	(!) Windows
+	(!) Mobile
+}
+
+(!) Tierlist Organizing {
+	(!) Coloring 
+	(!) Ordering 
+	(!) Foldering
+	Export folders
+}
+
+(!) Github: 
+{
+	(!) Make an actual Readme, with images of both devices. 
+	(!) Add Desktop and Android Releases. 
 }
 
 (!) Add formatting support for Tier Item Notes

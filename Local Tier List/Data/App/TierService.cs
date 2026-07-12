@@ -1,17 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using Local_Tier_List.Data.TierLists;
+using MudBlazor.Charts;
 
 namespace Local_Tier_List.Data.App
 {
     public class TierService
     {
         private static TierLister _tierlister;
+        private static TLFolder _rootfolder;
 
         public static TierLister tl 
         { 
@@ -33,6 +35,18 @@ namespace Local_Tier_List.Data.App
             } 
         }
 
+        public static TLFolder RootFolder
+        {
+            get
+            {
+                if (_rootfolder == null)
+                {
+                    _rootfolder = LoadTLFolders();
+                }
+                return _rootfolder;
+            }
+        }
+
         // DEFAULT FILE LOCATIONS  ------------------------------------------
         public static string GetMainFolder()
         {
@@ -51,29 +65,105 @@ namespace Local_Tier_List.Data.App
             return Path.Join(p, "lists.json");
         }
 
+        public static string GetFolderFile()
+        {
+            var p = GetMainFolder();
+            return Path.Join(p, "folderstructure.json");
+        }
+
         // SAVING          ------------------------------------------
         public async static Task SaveAll()
         {
-            try
+            await SaveAllJson();
+        }
+
+        /// <summary>
+        /// Returns the tierlists included ON ALL FOLDERS recursively, and adds any tierlists found in folders that are not in the main list to the main list.
+        /// </summary>
+        /// <returns></returns>
+        static List<TierList> GetIncludedTL(TLFolder folder, Dictionary<Guid, TierList>alltierlists)
+        {
+            List<TierList> res = new();
+            foreach (var t in folder.Folders)
             {
-                await SaveAllJson();
+                var temp = GetIncludedTL(t, alltierlists);
+                if (temp.Count > 0) res.AddRange(temp);
             }
-            catch (Exception e)
+            foreach (var l in folder.Tierlists)
             {
-                throw new Exception("Couldn't save the tierlist data: " + e);
+                if (alltierlists.TryGetValue(l.Id, out var found))
+                    res.Add(found);
+                else
+                {
+                    Debug.WriteLine("Found a tierlist in a folder that is not in the main list: " + l.name + " ID: " + l.Id);
+                    Debug.WriteLine("Adding it in the main list");
+                    alltierlists.Add(l.Id, l);
+                    res.Add(l);
+                }
             }
+            return res;
         }
 
         static async Task SaveAllJson()
         {
+            // Validating first, mainly to actually remove tierlists removed by an entire folder deletion
+            if (RootFolder != null)
+            {
+                var missing = new List<TierList>();
+                var lookup = TierLists.ToDictionary(t => t.Id);
+                var res = GetIncludedTL(RootFolder, lookup);
+                if (res.Count > 0) missing = TierLists.Except(res).ToList();
+
+                foreach (var mis in missing)
+                {
+                    TierLists.Remove(mis);
+                }
+            }
+
             var json = await tl.ExportJsonAsync();
             await File.WriteAllTextAsync(GetMainFile(), json);
+            await SaveFoldersJson();
+        }
+
+        static async Task SaveFoldersJson()
+        {
+            var content = "";
+            if (RootFolder != null)
+            {
+                var folderDTO = TLFolderDTO.ToDTO(RootFolder);
+                content = JsonSerializer.Serialize(folderDTO, options);
+            }
+            await File.WriteAllTextAsync(GetFolderFile(), content);
         }
 
         // LOADING         ------------------------------------------
         public static List<TierList> Import(string ImportJson)
         {
+            // separate folders from tl data
             return _tierlister.LoadFromJson(ImportJson);
+        }
+
+        public static TLFolder LoadTLFolders()
+        {
+            try
+            {
+                var temp = File.ReadAllText(GetFolderFile());
+                if (!String.IsNullOrEmpty(temp))
+                {
+                    TLFolderDTO? data = JsonSerializer.Deserialize<TLFolderDTO>(temp, options);
+                    if (data != null)
+                    {
+                        var tls = TierLists;
+                        var res = TLFolderDTO.ToObject(data, tls);
+                        return res;
+                    }
+                }
+            }
+            catch (FileNotFoundException e)
+            {
+
+            }
+            return new TLFolder() { Name = "Root", Tierlists = new List<TierList>(TierService.TierLists), Color = "#ffffff00" };
         }
     
         public static TierLister LoadTierLister()
@@ -123,6 +213,14 @@ namespace Local_Tier_List.Data.App
                 return new TierLister();
             }
         }
+
+        static JsonSerializerOptions options = new()
+        {
+            //ReferenceHandler = ReferenceHandler.Preserve,
+            //DefaultIgnoreCondition = JsonIgnoreCondition.Never,
+            IncludeFields = true,
+            WriteIndented = true
+        };
 
         // DEPRECATED      ------------------------------------------
         static TierList ReadList(string tierlist)

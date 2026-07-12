@@ -1,0 +1,674 @@
+﻿@using Microsoft.Extensions.Logging
+@inject ILogger<TLList> Logger
+
+@if (selectedChild != null)
+{
+	<TLList Folder="selectedChild"
+			Parent="this"
+			editMode="editMode"
+			mobile="mobile"
+			OnSelect="OnSelect"
+			OnChangesMade="OnChangesMade"
+			OnReturnFolder="FolderReturn"
+			OnDeletedItems="OnDeletedItems"
+	>
+	</TLList>
+}
+else
+{
+	<div class="row mx-1 pb-2 flex-row justify-content-start col-12 flex-fill flex-wrap d-flex rounded" style="background-color: @(GetFolderBackgroundColor(Folder.Color)); background-blend-mode: screen">
+		@if (Parent != null)
+		{
+			<p class="m-2">@GetDepthIndicator()</p>
+			<div class="row col-sm-3 col-md-2 col-lg-1 mx-0 my-1 d-flex flex-wrap">
+				<div class="row p-0 col-12 d-flex flex-fill">
+					<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
+						<button class="col-12 btn bg-highlight text-center justify-content-center p-2 rounded clickableOuter align-content-center"
+								@onclick="() => OnReturnFolder.InvokeAsync()"
+								@ondragover="() => OverReturn()"
+								style="opacity: @(OverReturnButton ? "0.5" : "1")">
+							<MudIcon Icon="@Icons.Material.Filled.KeyboardReturn" Title="Go To Upper Folder" />
+						</button>
+					</div>
+				</div>
+			</div>
+		}
+		@if (lists!.Count <= 0 && IsRoot)
+		{
+			<div class="col-sm-12 col-lg-4 mx-2 flex-column justify-content-center d-flex">
+				<h5> There are no saved TierLists, create one with the "New TierList" button! </h5>
+			</div>
+		}
+		else
+		{
+			@for (int local = 0; local < Folder.Folders.Count; local++) // FOLDERS
+			{
+				int i = local;
+				<div class="row col-sm-4 col-md-3 col-lg-2 mx-0 my-1 d-flex flex-wrap">
+					<div class="row p-0 col-12 d-flex flex-fill">
+					<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
+						@if (!editMode)
+						{
+							<a class="col-12 btn text-center justify-content-center p-2 rounded clickableOuter align-content-center"
+							style="background-color: @(String.IsNullOrEmpty(Folder.Folders[i].Color) ? "var(--highlight-color)" : Folder.Folders[i].Color);
+								color: @(String.IsNullOrEmpty(Folder.Folders[i].Color) ? "white" : GlobalStyleFunctions.GetMostReadableTextColor(Folder.Folders[i].Color))"
+								@onclick="() => OpenFolder(Folder.Folders[i])">
+								<MudIcon Icon="@Icons.Material.Filled.Folder" Title="@(Folder.Folders[i].Name + "Folder")" />
+								@Folder.Folders[i].Name
+							</a>
+						}
+						else
+						{
+							<a class="col-10 btn text-center justify-content-center p-2 rounded draggableOuter align-content-center" draggable="true"
+							style="background-color: @(String.IsNullOrEmpty(Folder.Folders[i].Color) ? "var(--highlight-color)" : Folder.Folders[i].Color);
+								outline: dashed 2px; outline-color: @(String.IsNullOrEmpty(Folder.Folders[i].Color) ? "var(--highlight-color)" : Folder.Folders[i].Color);
+								color: @(String.IsNullOrEmpty(Folder.Folders[i].Color) ? "white" : GlobalStyleFunctions.GetMostReadableTextColor(Folder.Folders[i].Color));
+								opacity: @(DragDropApi<TLFolder>.GetOver() == Folder.Folders[i] ? "0.5" : "1")"
+							@ondragover="() => OverFolder(Folder.Folders, i)"
+							@ondragstart="async (e) => await FolderOnPress(e, i)"
+							@onmousedown="async (e) => await FolderOnPress(e, i)"
+							@ondragend="@(async () => await StopDrag("Folder"))">
+							    <MudIcon Icon="@Icons.Material.Filled.Folder" Title="@(Folder.Folders[i].Name +  "Folder")" />
+								@Folder.Folders[i].Name
+							</a>
+							<button class="text-light col-2 p-2 ms-1 btn bg-danger clickable rounded flex-nowrap align-content-center" @onclick="() => TryDelete(Folder.Folders[i])">✖</button>
+						}
+					</div>
+					</div>
+				</div>
+			}
+			@for (int local = 0; local < lists.Count; local++) // TIERLISTS 
+			{
+				int i = local;
+
+				<div class="row col-sm-4 col-md-3 col-lg-2 mx-0 my-1 d-flex flex-wrap">
+					<div class="row p-0 col-12 d-flex flex-fill">
+						<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
+							@if (!editMode)
+							{
+								<a class="col-12 btn text-center justify-content-center p-2 rounded clickableOuter align-content-center"
+								style="background-color: @(String.IsNullOrEmpty(lists[i].color) ? "var(--highlight-color)" : lists[i].color);
+								color: @(String.IsNullOrEmpty(lists[i].color) ? "white" : GlobalStyleFunctions.GetMostReadableTextColor(lists[i].color))"
+								@onclick="() => OnSelect.InvokeAsync(lists[i])">
+									@lists[i].name
+								</a>
+							}
+							else
+							{
+								<a class="col-10 btn text-center justify-content-center p-2 rounded draggableOuter align-content-center" draggable="true"
+								style="background-color: @(String.IsNullOrEmpty(lists[i].color) ? "var(--highlight-color)" : lists[i].color);
+								outline: dashed 2px; outline-color: @(String.IsNullOrEmpty(lists[i].color) ? "var(--highlight-color)" : lists[i].color);
+								color: @(String.IsNullOrEmpty(lists[i].color) ? "white" : GlobalStyleFunctions.GetMostReadableTextColor(lists[i].color));
+								opacity: @(DragDropApi<TierList>.GetOver() == lists[i] ? "0.5" : "1")"
+								@ondragover="() => OverTL(lists, i)"
+								@ondragstart="async (e) => await TLOnPress(e, i)"
+								@onmousedown="async (e) => await TLOnPress(e, i)"
+								@ondragend="@(async () => await StopDrag("Tierlist"))">
+									@lists[i].name
+								</a>
+								<button class="text-light col-2 p-2 ms-1 btn bg-danger clickable rounded flex-nowrap align-content-center" @onclick="() => TryDelete(lists[i])">✖</button>
+							}
+						</div>
+					</div>
+				</div>
+			}
+		}
+		@if (editMode)
+		{
+			<div class="row col-sm-4 col-md-3 col-lg-2 mx-0 my-1 d-flex flex-wrap">
+				<div class="row p-0 col-12 d-flex flex-fill">
+					<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
+						<h5 class="clickableOuter flex-fill p-0 m-0 text-center rounded btn template align-content-center text-light" style="min-height: 40px" @onclick="() => NewFolder()"> <MudIcon Icon="@Icons.Material.Filled.CreateNewFolder" Title="New Folder" /> New Folder </h5>
+					</div>
+				</div>
+			</div>
+			<div class="row col-sm-4 col-md-3 col-lg-2 mx-0 my-1 d-flex flex-wrap">
+				<div class="row p-0 col-12 d-flex flex-fill">
+					<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
+						<h5 class="clickableOuter flex-fill p-0 m-0 text-center rounded btn template align-content-center text-light" style="min-height: 40px" @onclick="() => NewTierList()"> <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile" Title="New Folder" /> New Tierlist </h5>
+					</div>
+				</div>
+			</div>
+		}
+	</div>
+}
+
+@switch (CurrentModal)
+{
+	case ModalType.TLEdit:
+		{
+			<div class="maiedal d-flex flex-column text-center justify-content-center">
+				<div class="p-4 darken-85 bgblur-5 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
+					<div class="d-flex p-2 text-end justify-content-end">
+						<a class="clickable" @onclick="async () => { ResetModal(); await OnChangesMade.InvokeAsync(); }">✖</a>
+					</div>
+					<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selectedTierlist!.name" Label="Name" Variant="Variant.Outlined"></MudTextField>
+					<MudColorPicker Label="TierList Color" @bind-Text="selectedTierlist.color" Style="@($"color: {selectedTierlist!.color};")" Placeholder="Select Color" />
+				</div>
+			</div>
+		}
+		break;
+	case ModalType.FolderEdit:
+		{
+			<div class="maiedal d-flex flex-column text-center justify-content-center">
+				<div class="p-4 darken-85 bgblur-5 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
+					<div class="d-flex p-2 text-end justify-content-end">
+						<a class="clickable" @onclick="async () => { selectedFolder = null; CurrentModal = ModalType.None; await OnChangesMade.InvokeAsync(); }">✖</a>
+					</div>
+					<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selectedFolder!.Name" Label="Name" Variant="Variant.Outlined"></MudTextField>
+					<MudColorPicker Label="Folder Color" @bind-Text="selectedFolder.Color" Style="@($"color: {selectedFolder.Color};")" Placeholder="Select Color" />
+				</div>
+			</div>
+		}
+		break;
+	case ModalType.TLDelete:
+		{
+			<div class="maiedal d-flex flex-column text-center justify-content-center">
+				<div class="p-2 darken-95 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-6">
+					<p> Are you sure you want to permanently remove this tierlist? All tiers and items registered within will be deleted! </p>
+					<div class="d-flex flex-row flex-wrap mx-auto">
+						<button class="mx-2 btn text-light" @onclick="ResetModal">Cancel</button>
+						<button class="mx-2 btn text-danger" @onclick="Delete">Yes, remove it and all items within</button>
+					</div>
+				</div>
+			</div>
+		}
+		break;
+	case ModalType.FolderDelete:
+		{
+			<div class="maiedal d-flex flex-column text-center justify-content-center">
+				<div class="p-2 darken-95 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-6">
+					<p> Are you sure you want to permanently remove this folder? All tiers and items registered within will be deleted! </p>
+					<div class="d-flex flex-row flex-wrap mx-auto justify-content-center">
+						<button class="mx-2 btn text-light" @onclick="ResetModal">Cancel</button>
+						<button class="mx-2 btn text-warning" @onclick="DeleteFolderOnly">Remove the folder only</button>
+						<button class="mx-2 btn text-danger" @onclick="Delete">Yes, remove the folder and the tierlists within</button>
+					</div>
+				</div>
+			</div>
+		}
+		break;
+}
+
+@code {
+	[Parameter]
+	public required TLFolder Folder { get; set; }
+
+	TLFolder? selectedChild; 
+
+	[Parameter]
+	public bool IsRoot { get; set; } = false;
+	[Parameter]
+	public bool mobile { get; set; } = false;
+	[Parameter]
+	public TLList? Parent { get; set; } = null;
+	[Parameter]
+	public bool editMode { get; set; } = false;
+
+	[Parameter]
+	public EventCallback OnNewTierList { get; set; }
+	[Parameter]
+	public EventCallback<TierList> OnSelect { get; set; }
+	/// <summary>
+	/// Only set this to override the default tierlist edit behavior. By default shows a basic modal.
+	/// </summary>
+	[Parameter]
+	public EventCallback<TierList> OnEditTierlist { get; set; }
+	/// <summary>
+	/// Only set this to override the default folder edit behavior. By default shows a basic modal.
+	/// </summary>
+	[Parameter]
+	public EventCallback<TLFolder> OnEditFolder { get; set; }
+	/// <summary>
+	/// Only set this to override the default delete behavior. By default shows a confirmation modal and deletes if confirmed.
+	/// </summary>
+	[Parameter]
+	public EventCallback<TierList> OnDeleteTierlist { get; set; }
+	/// <summary>
+	/// Only set this to override the default delete behavior. By default shows a confirmation modal and deletes if confirmed.
+	/// </summary>
+	[Parameter]
+	public EventCallback<TLFolder> OnDeleteFolder { get; set; }
+	/// <summary>
+	/// Purely for the default deletion behaviour, so the external component can check for changes and update the UI accordingly. This is called after a deletion is confirmed and completed.
+	/// </summary>
+	[Parameter]
+	public EventCallback<List<TierList>> OnDeletedItems { get; set; }
+	[Parameter]
+	public EventCallback OnChangesMade { get; set; }
+	[Parameter]
+	public EventCallback OnReturnFolder { get; set; } // go to parent folder
+	[Parameter]
+	public EventCallback<TLFolder> OnFolderOpened { get; set; }
+
+	List<TierList> lists;
+
+	enum ModalType {
+		TLEdit,
+		FolderEdit,
+		TLDelete,
+		FolderDelete,
+		None
+	}
+
+	ModalType CurrentModal = ModalType.None;
+	TLFolder? selectedFolder;
+	TierList? selectedTierlist;
+
+	bool yousure = false;
+
+	// Mobile drag threshold
+	CancellationTokenSource? dragDelayCts;
+	bool dragArmed = false;
+	bool dragStarted = false;
+	int dragthreshold = 200; // ms btw this isn't functional rn, OnPress only detects touch, not the drag. Drag is detected with onDrag
+	ElementReference elementRef;
+	bool overrideDrag = false;
+
+	protected override async Task OnInitializedAsync()
+	{
+		lists = Folder.Tierlists;
+	}
+
+	string GetDepthIndicator()
+	{
+		string indicator = "";
+		var current = this;
+		while (current != null && !current.IsRoot)
+		{
+			indicator += current.Folder.Name + " > ";
+			current = current.Parent;
+		}
+		return indicator;
+	}
+
+	async Task OpenFolder(TLFolder folder)
+	{
+		selectedChild = folder;
+		await OnFolderOpened.InvokeAsync(folder);
+	}
+
+	async Task OpenFolder()
+	{
+		selectedChild = null;
+		await OnFolderOpened.InvokeAsync(Folder);
+	}
+
+	async Task FolderReturn()
+	{
+		selectedChild = null;
+		await OnFolderOpened.InvokeAsync(Folder);
+	}
+
+	async Task NewFolder()
+	{
+		var newfolder = new TLFolder()
+		{
+			Name = "New Folder",
+			Tierlists = new List<TierList>()
+		};
+		Folder.Folders.Add(newfolder);
+		await OnChangesMade.InvokeAsync();
+	}
+
+	async Task NewTierList()
+	{
+		var temp = new TierList($"Tierlist {TierService.TierLists.Count + 1}", true);
+		TierService.TierLists.Add(temp);
+		Folder.Tierlists.Add(temp);
+		await OnNewTierList.InvokeAsync();
+		await OnSelect.InvokeAsync(temp);
+		await OnChangesMade.InvokeAsync();
+	}
+
+	async Task TryDelete(TLFolder folder)
+	{
+		if (OnDeleteFolder.HasDelegate)
+		{
+			await OnDeleteFolder.InvokeAsync(folder);
+		}
+		else
+		{
+			selectedFolder = folder;
+			CurrentModal = ModalType.FolderDelete;
+		}
+	}
+	async Task TryDelete(TierList tl)
+	{
+		if (OnDeleteTierlist.HasDelegate)
+		{
+			await OnDeleteTierlist.InvokeAsync(tl);
+		}
+		else
+		{
+			selectedTierlist = tl;
+			CurrentModal = ModalType.TLDelete;
+		}
+	}
+
+	async Task Delete()
+	{
+		if (CurrentModal == ModalType.TLDelete)
+		{
+			lists.Remove(selectedTierlist);
+			await OnDeletedItems.InvokeAsync(new List<TierList>(){ selectedTierlist });
+			ResetModal();
+			await OnChangesMade.InvokeAsync();
+		}
+		else if (CurrentModal == ModalType.FolderDelete)
+		{
+			Folder.Folders.Remove(selectedFolder);
+			await OnDeletedItems.InvokeAsync(selectedFolder.Tierlists);
+			ResetModal();
+			await OnChangesMade.InvokeAsync();
+		}
+		else Logger.LogInformation("Somethings off about the TLList deletion...");
+	}
+
+	async Task DeleteFolderOnly()
+	{
+		var tl = selectedFolder.Tierlists;
+		Folder.Tierlists.AddRange(tl);
+		Folder.Folders.Remove(selectedFolder);
+		ResetModal();
+		await OnChangesMade.InvokeAsync();
+	}
+
+	void ResetModal()
+	{
+		CurrentModal = ModalType.None;
+		selectedTierlist = null;
+		selectedFolder = null;
+	}
+
+	string GetFolderBackgroundColor(string Basecolor)
+	{
+		if (Basecolor.Length <= 7)
+			return Basecolor + "64";
+		else if (Basecolor.Length <= 9)
+		{
+			var currentopacity = Basecolor.Remove(0, 6);
+			var total = Convert.ToInt32(currentopacity, 16);
+			total /= 5;
+			Basecolor = Basecolor.Remove(7);
+			return Basecolor + total.ToString("X");
+		}
+		return "00";
+	}
+
+	// DRAG AND PRESS ---------------------
+
+	bool OverReturnButton = false;
+
+	async Task FolderOnPress(MouseEventArgs e, int index)
+	{
+		//Logger.LogInformation("Ahoy!");
+		if (mobile)
+		{
+			//Logger.LogInformation("Ahoy2!");
+			dragStarted = false;
+			dragArmed = true;
+
+			dragDelayCts?.Cancel();
+			dragDelayCts = new CancellationTokenSource();
+
+			try
+			{
+				// long-press threshold
+				await Task.Delay(dragthreshold, dragDelayCts.Token);
+
+				if (!dragArmed)
+					return;
+
+				dragStarted = true;
+				Logger.LogInformation("DRAGDELAY: Pointer passed threshold, Dragging!");
+
+				DragDropApi<TLFolder>.StartDrag(Folder.Folders, index);
+				return;
+			}
+			catch (TaskCanceledException)
+			{
+				Logger.LogInformation("DRAGDELAY: Pointer released early! Editing item instead");
+				// continue past
+			}
+		}
+		else if (e.Buttons == 2) // right click
+		{
+			// continue past
+		}
+		else 
+		{
+			dragDelayCts?.Cancel();
+
+			dragDelayCts = new CancellationTokenSource();
+			var token = dragDelayCts.Token;
+
+			overrideDrag = true;
+
+			try
+			{
+				await Task.Delay(50, token);
+				overrideDrag = false;
+			}
+			catch (TaskCanceledException)
+			{
+				// bro just did a double click
+			}
+			DragDropApi<TLFolder>.StartDrag(Folder.Folders, index);
+			return;
+		}
+
+		// Reached when editing only
+		if (OnEditFolder.HasDelegate) await OnEditFolder.InvokeAsync(Folder.Folders[index]);
+		else
+		{
+			selectedFolder = Folder.Folders[index];
+			CurrentModal = ModalType.FolderEdit;
+		}
+	}
+
+	async Task TLOnPress(MouseEventArgs e, int index)
+	{
+		//Logger.LogInformation("Ahoy!");
+		if (mobile)
+		{
+			//Logger.LogInformation("Ahoy2!");
+			dragStarted = false;
+			dragArmed = true;
+
+			dragDelayCts?.Cancel();
+			dragDelayCts = new CancellationTokenSource();
+
+			try
+			{
+				// long-press threshold (tweak this)
+				await Task.Delay(dragthreshold, dragDelayCts.Token);
+
+				if (!dragArmed)
+					return;
+
+				dragStarted = true;
+				Logger.LogInformation("DRAGDELAY: Pointer passed threshold, Dragging!");
+
+				DragDropApi<TierList>.StartDrag(lists, index);
+				return;
+			}
+			catch (TaskCanceledException)
+			{
+				Logger.LogInformation("DRAGDELAY: Pointer released early! Editing item instead");
+				// continue past
+			}
+		}
+		else if (e.Buttons == 2) // right click
+		{
+			// continue past
+		}
+		else
+		{
+			dragDelayCts?.Cancel();
+
+			dragDelayCts = new CancellationTokenSource();
+			var token = dragDelayCts.Token;
+
+			overrideDrag = true;
+
+			try
+			{
+				await Task.Delay(50, token);
+				overrideDrag = false;
+			}
+			catch (TaskCanceledException)
+			{
+				// bro just did a double click
+			}
+			DragDropApi<TierList>.StartDrag(lists, index);
+			return;
+		}
+
+		// Reached when editing only
+		if (OnEditTierlist.HasDelegate) await OnEditTierlist.InvokeAsync(lists[index]);
+		else
+		{
+			selectedTierlist = lists[index];
+			CurrentModal = ModalType.TLEdit;
+		}
+	}
+
+	async Task OverTL(List<TierList>lists, int i)
+	{
+		OverReturnButton = false;
+		var dragFolder = DragDropApi<TLFolder>.GetDragged();
+		var overFolder = DragDropApi<TLFolder>.GetOver();
+		if (overFolder != null)
+		{
+			DragDropApi<TLFolder>.OuttaHere();
+		}
+		if (dragFolder == null)
+		{
+			DragDropApi<TierList>.OverHere(lists, i);
+		}
+		else
+		{
+			DragDropApi<TLFolder>.OuttaHere();
+		}
+	}
+
+	async Task OverFolder(List<TLFolder> folders, int i)
+	{
+		OverReturnButton = false;
+		var OverTL = DragDropApi<TierList>.GetOver();
+		if (OverTL != null)
+		{
+			DragDropApi<TierList>.OuttaHere();
+		}
+
+		DragDropApi<TLFolder>.OverHere(folders, i);
+	}
+
+	async Task OverReturn()
+	{
+		DragDropApi<TLFolder>.OuttaHere();
+		DragDropApi<TierList>.OuttaHere();
+		OverReturnButton = true;
+	}
+
+	async Task StopDrag(string caller)
+	{
+		Logger.LogInformation("Stopped drag!!");
+		if (overrideDrag)
+		{
+			overrideDrag = false;
+			var selected = DragDropApi<TierList>.GetDragged();
+			if (selected != null)
+				await OnSelect.InvokeAsync(selected);
+
+			var folder = DragDropApi<TLFolder>.GetDragged();
+			if (folder != null)
+				selectedChild = folder;
+
+			// drag drops are canceled at the end of the method
+		}
+		else
+		{
+			if (caller == "Tierlist")
+			{
+				Logger.LogInformation("TL");
+				if (mobile)
+				{
+					dragArmed = false;
+					dragDelayCts?.Cancel();
+
+					dragStarted = false;
+				}
+				var overFolder = DragDropApi<TLFolder>.GetOver();
+				if (overFolder != null)
+				{
+					var dragged = DragDropApi<TierList>.GetDragged();
+					if (dragged != null)
+					{
+						overFolder.Tierlists.Add(dragged);
+						lists.Remove(dragged);
+						await OnChangesMade.InvokeAsync();
+					}
+				}
+				else if (OverReturnButton)
+				{
+					var dragged = DragDropApi<TierList>.GetDragged();
+					if (dragged != null)
+					{
+						Parent!.Folder.Tierlists.Add(dragged);
+						lists.Remove(dragged);
+						await OnChangesMade.InvokeAsync();
+					}
+					OverReturnButton = false;
+				}
+				else if (DragDropApi<TierList>.StopDrag())
+				{
+					await OnChangesMade.InvokeAsync();
+					return;
+				}
+			}
+			if (caller == "Folder")
+			{
+				Logger.LogInformation("Folder");
+				if (mobile)
+				{
+					dragArmed = false;
+					dragDelayCts?.Cancel();
+
+					dragStarted = false;
+				}
+				var overFolder = DragDropApi<TLFolder>.GetOver();
+				if (OverReturnButton)
+				{
+					var dragged = DragDropApi<TLFolder>.GetDragged();
+					if (dragged != null)
+					{
+						Parent!.Folder.Folders.Add(dragged);
+						Folder.Folders.Remove(dragged);
+						await OnChangesMade.InvokeAsync();
+					}
+					OverReturnButton = false;
+				}
+				else if (overFolder != null)
+				{
+					var dragged = DragDropApi<TLFolder>.GetDragged();
+					if (dragged != null && overFolder != dragged)
+					{
+						overFolder.Folders.Add(dragged);
+						Folder.Folders.Remove(dragged);
+						await OnChangesMade.InvokeAsync();
+					}
+				}
+				else if (DragDropApi<TLFolder>.StopDrag())
+				{
+					await OnChangesMade.InvokeAsync();
+					return;
+				}
+			}
+		}
+		
+		DragDropApi<TierList>.StopDrag(DragDropBehaviour.Cancel);
+		DragDropApi<TLFolder>.StopDrag(DragDropBehaviour.Cancel);
+	}
+}
