@@ -9,70 +9,78 @@
 @inject ILogger<TierListComp> Logger
 @inject IJSRuntime JSRuntime
 
-<div class="maiedal">
-	<div class="d-flex col-12 col-md-6 darken-85 bgblur-5 flex-column mx-auto my-auto overflow-visible shadow align-content-center" style="border-radius: 2vw">
-		<div class="d-flex p-4 text-end justify-content-end">
-			<a class="clickable fs-5" @onclick="Exit">✖</a>
-		</div>
-		<div class="d-flex flex-column flex-wrap p-md-4 p-1 pt-0">
-			<img class="text-center d-flex mx-auto @(selecitem.img is LinkedImage li1 && li1.isLocal ? LinkedImage.SimpliflyLink(li1.link) : "")" src="@selecImage" style="max-height: 40vh; max-width: 40vw; border: 1px solid; border: grey; border-radius: 2vw" />
-			<div>
-				<p class="text-danger">@itemErrorText</p>
+@if (false)
+{
+	<LoadingDisplay />
+}
+else
+{
+	<div class="maiedal">
+		<div class="d-flex col-12 col-md-6 darken-85 bgblur-5 flex-column mx-auto my-auto overflow-visible shadow align-content-center" style="border-radius: 2vw">
+			<div class="d-flex p-4 text-end justify-content-end">
+				<a class="clickable fs-5" @onclick="Exit">✖</a>
 			</div>
-			<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitem.name" TextChanged="@(() => Validate("name"))" Label="Title" Variant="Variant.Outlined"></MudTextField>
-			<div class="d-flex flex-nowrap col-12">
-				@if (selecitem.img is LinkedImage li)
-				{
-					<MudTextField Class="center-input thick-outline mx-2" Style="color: white;" @bind-Value="@li.link" TextChanged="@(async () => { selecImage = await GetSelectImage(); Validate("image"); UpdateModifiedDate(); })" Label="Image Link" Variant="Variant.Outlined"></MudTextField>
-					@if (!mobile)
+			<div class="d-flex flex-column flex-wrap p-md-4 p-1 pt-0">
+				<img class="text-center d-flex mx-auto @(selecitem.img is LinkedImage li1 && li1.isLocal ? LinkedImage.SimpliflyLink(li1.link) : "")" src="@selecImage" style="max-height: 40vh; max-width: 40vw; border: 1px solid; border: grey; border-radius: 2vw" />
+				<div>
+					<p class="text-danger">@itemErrorText</p>
+				</div>
+				<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitem.name" TextChanged="@(() => Validate("name"))" Label="Title" Variant="Variant.Outlined"></MudTextField>
+				<div class="d-flex flex-nowrap col-12">
+					@if (selecitem.img is LinkedImage li)
 					{
-						<div class="d-flex flex-nowrap justify-content-center align-items-center me-2">
-						<MudTooltip class="col-6 col-md-3" Color="Color.Transparent">
-							<ChildContent>
-								<MudIcon Icon="@Icons.Material.Filled.Info"/>
-							</ChildContent>
-							<TooltipContent>
-								<div class="text-light darken-95 rounded p-3 m-0 col-12">
-									<p>Can be an online URL (http:) or a local address of an image in your computer</p> 
-									<p>Use the button on the right to select an image directly </p>
-								</div>
-							</TooltipContent>
-						</MudTooltip>
-						</div>
+						<MudTextField Class="center-input thick-outline mx-2" Style="color: white;" @bind-Value="@li.link" TextChanged="@(async () => { selecImage = await GetSelectImage(); Validate("image"); await UpdateModifiedDate(); })" Label="Image Link" Variant="Variant.Outlined"></MudTextField>
+						@if (!mobile)
+						{
+							<div class="d-flex flex-nowrap justify-content-center align-items-center me-2">
+								<MudTooltip class="col-6 col-md-3" Color="Color.Transparent">
+									<ChildContent>
+										<MudIcon Icon="@Icons.Material.Filled.Info" />
+									</ChildContent>
+									<TooltipContent>
+										<div class="text-light darken-95 rounded p-3 m-0 col-12">
+											<p>Can be an online URL (http:) or a local address of an image in your computer</p>
+											<p>Use the button on the right to select an image directly </p>
+										</div>
+									</TooltipContent>
+								</MudTooltip>
+							</div>
 
-						<div class="d-flex align-content-center align-items-center text-center justify-content-center">
-							<button class="btn bg-highlight me-2 py-3" @onclick="() => PickLocalImage(false)"><MudIcon Icon="@Icons.Material.Filled.FolderOpen" Color="Color.Default" Title="Pick Local Image" /></button>
+							<div class="d-flex align-content-center align-items-center text-center justify-content-center">
+								<button class="btn bg-highlight me-2 py-3" @onclick="() => PickLocalImage(false)"><MudIcon Icon="@Icons.Material.Filled.FolderOpen" Color="Color.Default" Title="Pick Local Image" /></button>
+							</div>
+						}
+					}
+					else if (mobile)
+					{
+						<button class="btn bg-highlight col-8 ms-2 py-3 mt-1 text-light" @onclick="@(() => selecitem.img = new LinkedImage(""))">Change to Linked Image</button>
+					}
+					@if (mobile)
+					{
+						<div class="d-flex col-4 align-content-center align-items-center text-center justify-content-center me-2">
+							<button class="btn bg-highlight me-2 py-3" @onclick="() => PickLocalImage(false)"><MudIcon Icon="@Icons.Material.Filled.FolderOpen" Color="Color.Default" Title="PickLocal" /></button>
+							<button class="btn bg-highlight py-3" @onclick="() => PickLocalImage(true)"><MudIcon Icon="@Icons.Material.Filled.CameraAlt" Color="Color.Default" Title="PickLocalCamera" /></button>
 						</div>
 					}
-				}
-				else if (mobile)
+				</div>
+				<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitemtags" TextChanged="@(async () => { Validate("tags"); await UpdateTags(); })" Label="Tags" Variant="Variant.Outlined" HelperText="(Separated by commas)"></MudTextField>
+				<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitem.notes" TextChanged="@UpdateModifiedDate" Label="Notes" Variant="Variant.Outlined" AutoGrow="true" OnBlur="@(() => Validate("notes"))"></MudTextField>
+				<div class="d-flex mx-auto flex-fill col-12 mt-1">
+					<a class="bg-highlight text-light flex-fill text-center p-2 ms-2 me-1 my-auto rounded clickable" @onclick="() => OnCopy.InvokeAsync(selecitem)"><MudIcon Icon="@Icons.Material.Filled.Upload" Title="Export" />Copy</a>
+					<a class="bg-highlight text-light flex-fill text-center p-2 me-2 ms-1 my-auto rounded clickable" @onclick="Pasted"><MudIcon Icon="@Icons.Material.Filled.Download" Title="Import" /> Paste</a>
+				</div>
+				@if (haspasted)
 				{
-					<button class="btn bg-highlight col-8 ms-2 py-3 mt-1 text-light" @onclick="@(() => selecitem.img = new LinkedImage(""))">Change to Linked Image</button>
-				}
-				@if (mobile)
-				{
-					<div class="d-flex col-4 align-content-center align-items-center text-center justify-content-center me-2">
-						<button class="btn bg-highlight me-2 py-3" @onclick="() => PickLocalImage(false)"><MudIcon Icon="@Icons.Material.Filled.FolderOpen" Color="Color.Default" Title="PickLocal" /></button>
-						<button class="btn bg-highlight py-3" @onclick="() => PickLocalImage(true)"><MudIcon Icon="@Icons.Material.Filled.CameraAlt" Color="Color.Default" Title="PickLocalCamera" /></button>
+					<div class="d-flex mx-auto flex-fill col-12 mt-2">
+						<a class="bg-highlight text-light flex-fill text-center p-2 mx-2 my-auto rounded clickable" @onclick="() => { OnRollbackPaste.InvokeAsync(); haspasted = false; }"><MudIcon Icon="@Icons.Material.Filled.Undo" Title="Undo Paste" /> Undo Paste</a>
 					</div>
 				}
+				<button class="bg-danger rounded m-2 p-2" @onclick="YouSure">Remove</button>
 			</div>
-			<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitemtags" TextChanged="@(() => { Validate("tags"); UpdateTags(); })" Label="Tags" Variant="Variant.Outlined" HelperText="(Separated by commas)"></MudTextField>
-			<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selecitem.notes" TextChanged="@UpdateModifiedDate" Label="Notes" Variant="Variant.Outlined" AutoGrow="true" OnBlur="@(() => Validate("notes"))"></MudTextField>
-			<div class="d-flex mx-auto flex-fill col-12 mt-1">
-				<a class="bg-highlight text-light flex-fill text-center p-2 ms-2 me-1 my-auto rounded clickable" @onclick="() => OnCopy.InvokeAsync(selecitem)"><MudIcon Icon="@Icons.Material.Filled.Upload" Title="Export" />Copy</a>
-				<a class="bg-highlight text-light flex-fill text-center p-2 me-2 ms-1 my-auto rounded clickable" @onclick="Pasted"><MudIcon Icon="@Icons.Material.Filled.Download" Title="Import" /> Paste</a>
-			</div>
-			@if (haspasted)
-			{
-				<div class="d-flex mx-auto flex-fill col-12 mt-2">
-					<a class="bg-highlight text-light flex-fill text-center p-2 mx-2 my-auto rounded clickable" @onclick="() => {OnRollbackPaste.InvokeAsync(); haspasted = false;}"><MudIcon Icon="@Icons.Material.Filled.Undo" Title="Undo Paste" /> Undo Paste</a>
-				</div>
-			}
-			<button class="bg-danger rounded m-2 p-2" @onclick="YouSure">Remove</button>
 		</div>
 	</div>
-</div>
+}
+
 @if (yousure)
 {
 	<div class="maiedal d-flex flex-column text-center justify-content-center">

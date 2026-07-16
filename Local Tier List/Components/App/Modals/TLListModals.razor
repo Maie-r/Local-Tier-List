@@ -1,0 +1,184 @@
+﻿@using Local_Tier_List.Data.App
+
+@if (Loading)
+{
+	<LoadingDisplay />
+}
+	@switch (ModalType)
+	{
+		case TLListModalType.TLEdit:
+			{
+				<div class="maiedal d-flex flex-column text-center justify-content-center">
+					<div class="p-4 darken-85 bgblur-5 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
+						<div class="d-flex p-2 text-end justify-content-end">
+							<a class="clickable" @onclick="OnClose">✖</a>
+						</div>
+						<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@SelectedTierlist!.name" Label="Name" Variant="Variant.Outlined"></MudTextField>
+						<MudColorPicker Label="TierList Color" @bind-Text="SelectedTierlist.color" Style="@($"color: {SelectedTierlist!.color};")" Placeholder="Select Color" />
+						<div class="row p-0 col-12 mx-auto d-flex flex-fill my-1">
+							<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
+								<h5 class="clickableOuter flex-fill p-2 m-0 text-center rounded btn bg-highlight align-content-center text-light" @onclick="@(() => IsMerging = true)"> Merge with another Tierlist </h5>
+							</div>
+						</div>
+					<div class="row p-0 col-12 mx-auto d-flex flex-fill my-1">
+						<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
+							<h5 class="clickableOuter flex-fill p-2 m-0 text-center rounded btn bg-danger align-content-center text-light" @onclick="@(() => {ModalType = TLListModalType.TLDelete; Innerdeletecall = true;})"> Delete Tierlist </h5>
+						</div>
+					</div>
+					</div>
+				</div>
+				@if (IsMerging)
+				{
+				<div class="maiedal d-flex flex-column text-center justify-content-center">
+					<div class="p-4 darken-85 bgblur-5 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
+						<p> Paste below the JSON string of the Tierlist you want to merge with the @SelectedTierlist.name Tierlist! </p><br />
+						<p> Incoming: </p>
+						<textarea class="font-monospace bg-dark text-light col-12 mb-2" style="height:200px;" @bind="mergeString"></textarea>
+						<div>
+							<p class="text-danger">@mergeErr</p>
+						</div>
+						<div class="my-5">
+							<MudSelect @bind-Value="currentMergeBehaviour" Label="Merging Behaviour">
+								@foreach (var kv in MergeOptions)
+								{
+									<MudSelectItem Value="kv.Value">@kv.Key</MudSelectItem>
+								}
+							</MudSelect>
+						</div>
+						<div class="d-flex flex-row flex-wrap mx-auto">
+							<button class="mx-2 border-1 border-white text-light rounded btn p-2" @onclick="() => IsMerging = false">Cancel</button>
+							<button class="mx-2 bg-highlight rounded btn p-2 text-light" @onclick="TryMerge">Merge</button>
+						</div>
+					</div>
+				</div>
+				}
+			}
+			break;
+		case TLListModalType.FolderEdit:
+			{
+				<div class="maiedal d-flex flex-column text-center justify-content-center">
+					<div class="p-4 darken-85 bgblur-5 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
+						<div class="d-flex p-2 text-end justify-content-end">
+							<a class="clickable" @onclick="OnClose">✖</a>
+						</div>
+						<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@SelectedFolder!.Name" Label="Name" Variant="Variant.Outlined"></MudTextField>
+						<MudColorPicker Label="Folder Color" @bind-Text="SelectedFolder.Color" Style="@($"color: {SelectedFolder.Color};")" Placeholder="Select Color" />
+					</div>
+				</div>
+			}
+			break;
+		case TLListModalType.TLDelete:
+			{
+				<div class="maiedal d-flex flex-column text-center justify-content-center">
+					<div class="p-2 darken-95 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-6">
+						<p> Are you sure you want to permanently remove this tierlist? All tiers and items registered within will be deleted! </p>
+						<div class="d-flex flex-row flex-wrap mx-auto">
+							<button class="mx-2 btn text-light" @onclick="DeleteCancel">Cancel</button>
+							<button class="mx-2 btn text-danger" @onclick="OnDelete">Yes, remove it and all items within</button>
+						</div>
+					</div>
+				</div>
+			}
+			break;
+		case TLListModalType.FolderDelete:
+			{
+				<div class="maiedal d-flex flex-column text-center justify-content-center">
+					<div class="p-2 darken-95 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-6">
+						<p> Are you sure you want to permanently remove this folder? All tiers and items registered within will be deleted! </p>
+						<div class="d-flex flex-row flex-wrap mx-auto justify-content-center">
+							<button class="mx-2 btn text-light" @onclick="DeleteCancel">Cancel</button>
+							<button class="mx-2 btn text-warning" @onclick="OnDeleteFolderOnly">Remove the folder only</button>
+							<button class="mx-2 btn text-danger" @onclick="OnDelete">Yes, remove the folder and the tierlists within</button>
+						</div>
+					</div>
+				</div>
+			}
+			break;
+}
+
+@code {
+	[Parameter]
+	public required TLListModalType ModalType { get; set; }
+	[Parameter]
+	public TierList SelectedTierlist { get; set;}
+	[Parameter]
+	public TLFolder SelectedFolder { get; set; }
+	[Parameter]
+	public EventCallback OnClose { get; set; }
+	[Parameter]
+	public EventCallback OnDelete { get; set; }
+	[Parameter]
+	public EventCallback OnDeleteFolderOnly { get; set; }
+	[Parameter]
+	public EventCallback OnLoaded { get; set; }
+	[Parameter]
+	public EventCallback<TierList> OnMerged { get; set; }
+
+	bool Loading = true;
+
+	bool Innerdeletecall = false;
+
+	// merging
+	MergeBehaviour currentMergeBehaviour = MergeBehaviourTable.SmartMerge;
+	Dictionary<string, MergeBehaviour> MergeOptions = new Dictionary<string, MergeBehaviour>()
+	{
+		{ "Smart Merge", MergeBehaviourTable.SmartMerge },
+		{ "Priority on Incoming", MergeBehaviourTable.MergeIntoCurrent },
+		{ "Smart Merge (Shallow)", MergeBehaviourTable.SmartMergeShallow },
+		{ "Priority on Incoming (Shallow)", MergeBehaviourTable.MergeIntoCurrentShallow },
+	};
+	bool IsMerging = false;
+	string mergeString;
+	string mergeErr = "";
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (!firstRender)
+			return;
+
+		if (ModalType == TLListModalType.TLEdit || ModalType == TLListModalType.FolderEdit)
+			Innerdeletecall = true;
+
+		Loading = false;
+		await OnLoaded.InvokeAsync();
+		StateHasChanged();
+	}
+
+	async Task DeleteCancel()
+	{
+		if (Innerdeletecall)
+		{
+			if (ModalType == TLListModalType.TLDelete)
+				ModalType = TLListModalType.TLEdit;
+			else
+				ModalType = TLListModalType.FolderEdit;
+		}
+		else await OnClose.InvokeAsync();
+	}
+
+	async Task TryMerge()
+	{
+		if (!String.IsNullOrEmpty(mergeString))
+		{
+			try
+			{
+				var t1 = TierService.Import(TierListSaveData.ExportTierList(SelectedTierlist)); // pretty jank but otherwise the selected tierlist gets mutated.
+				var t2 = TierService.Import(mergeString);
+				if (t2.Count <= 0 || t2.Count > 1)
+				{
+					mergeErr = "The second merge string has an invalid amount of tierlists, paste only ONE tierlist to merge at a time.";
+					return;
+				}
+				var t3 = TLMerger.MergeTierLists(currentMergeBehaviour, t1[0], t2[0]);
+				await OnClose.InvokeAsync();
+				await OnMerged.InvokeAsync(t3);
+			}
+			catch (Exception e)
+			{
+				mergeErr = e.Message;
+			}
+		}
+		else mergeErr = "Please fill both fields";
+	}
+}
+

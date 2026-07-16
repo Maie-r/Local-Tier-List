@@ -8,32 +8,40 @@
 @inject ILogger<TierListComp> Logger
 @inject IJSRuntime JSRuntime
 
-<div style="overflow: hidden">
-	<div class="maiedal align-content-center">
-		<div class="d-flex p-1 p-md-2 col-12 col-md-6 darken-85 bgblur-5 flex-column mx-auto my-auto shadow" style="border-radius: 1vw">
-			<div class="d-flex p-2 text-end justify-content-end">
-				<a class="clickable" @onclick="Exit">✖</a>
+@if (Loading)
+{
+	<LoadingDisplay />
+}
+else
+{
+	<div style="overflow: hidden">
+		<div class="maiedal align-content-center">
+			<div class="d-flex p-1 p-md-2 col-12 col-md-6 darken-85 bgblur-5 flex-column mx-auto my-auto shadow" style="border-radius: 1vw">
+				<div class="d-flex p-2 text-end justify-content-end">
+					<a class="clickable" @onclick="Exit">✖</a>
+				</div>
+				<div class="d-flex flex-column text-center justify-content-center mx-auto py-1 py-sm-1 py-md-auto">
+					<input type="text" value="@selectier.name" class="rounded fs-2 py-md-auto py-1 m-0 text-center flex-fill col-12 smoothBlending text-wrap" @onchange="(e) => ChangeTierName(e.Value?.ToString(), selectier.ogname)" placeholder="Tier Title" style="background-color: @selectier.color ; color: @GlobalStyleFunctions.GetMostReadableTextColor(selectier.color)">
+				</div>
+				<MudColorPicker Label="Tier Color" @bind-Text="selectier.color" Style="@($"color: {selectier.color};")" Placeholder="Select Color" />
+				<button class="m-2 bg-danger text-light rounded p-1" @onclick="YouSure">Remove</button>
 			</div>
-			<div class="d-flex flex-column text-center justify-content-center mx-auto py-1 py-sm-1 py-md-auto">
-				<input type="text" value="@selectier.name" class="rounded fs-2 py-md-auto py-1 m-0 text-center flex-fill col-12 smoothBlending text-wrap" @onchange="(e) => ChangeTierName(e.Value?.ToString(), selectier.ogname)" placeholder="Tier Title" style="background-color: @selectier.color ; color: @GlobalStyleFunctions.GetMostReadableTextColor(selectier.color)">
-			</div>
-			<MudColorPicker Label="Tier Color" @bind-Text="selectier.color" Style="@($"color: {selectier.color};")" Placeholder="Select Color" />
-			<button class="m-2 bg-danger text-light rounded p-1" @onclick="YouSure">Remove</button>
 		</div>
-	</div>
-	@if (yousure)
-	{
-		<div class="maiedal d-flex flex-column text-center align-items-center align-content-center justify-content-center">
-			<div class="p-2 p-md-4 darken-85 bgblur-5 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-5 border-2 border-light shadow">
-				<h5> Are you sure you want to permanently remove this tier? All items will be deleted with it!</h5>
-				<div class="d-flex flex-row flex-wrap mx-auto">
-					<button class="mx-2 text-light" @onclick="YouSure">No</button>
-					<button class="mx-2 bg-danger text-light rounded p-2" @onclick="DeleteTier">Yes, remove it and all items within</button>
+		@if (yousure)
+		{
+			<div class="maiedal d-flex flex-column text-center align-items-center align-content-center justify-content-center">
+				<div class="p-2 p-md-4 darken-85 bgblur-5 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-5 border-2 border-light shadow">
+					<h5> Are you sure you want to permanently remove this tier? All items will be deleted with it!</h5>
+					<div class="d-flex flex-row flex-wrap mx-auto">
+						<button class="mx-2 text-light" @onclick="YouSure">No</button>
+						<button class="mx-2 bg-danger text-light rounded p-2" @onclick="DeleteTier">Yes, remove it and all items within</button>
+					</div>
 				</div>
 			</div>
-		</div>
-	}
-</div>
+		}
+	</div>
+}
+
 
 @code
 {
@@ -73,8 +81,6 @@
 	protected override async Task OnInitializedAsync()
 	{
 		mobile = OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
-		await OnLoaded.InvokeAsync();
-		Loading = false;
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -82,6 +88,7 @@
 		if (firstRender) {
 			await OnLoaded.InvokeAsync();
 			Loading = false;
+			StateHasChanged();
 		}
 	}
 

@@ -8,39 +8,48 @@
 @inject ILogger<TierListComp> Logger
 @inject IJSRuntime JSRuntime
 
-<div style="overflow: hidden">
+	<div style="overflow: hidden">
 		<div class="maiedal align-content-center">
 			<div class="p-3 d-flex col-12 col-md-7 shadow darken-85 bgblur-5 flex-column mx-auto my-auto shadow" style="border-radius: 2vw;">
 				<div class="d-flex p-2 text-end justify-content-end">
 					<a class="clickable" @onclick="Exit">✖</a>
 				</div>
 				<div class="mx-1 mx-md-2">
-				@foreach (var pair in selected.tiers)
-				{
-					<div @key="@pair.Key" class="d-flex flex-wrap flex-md-nowrap my-2 py-2 px-4 me-sm-3 me-md-0" style="border: 2px solid; border-radius: 10px; border-color: @(pair.Value.color)!important;">
-						<div class="d-flex m-1 flex-column text-center justify-content-center mx-auto col-12 col-sm-3 py-1 py-sm-1 py-md-auto">
-							<input type="text" value="@pair.Value.name" class="rounded py-md-auto py-1 m-0 text-center smoothBlending flex-fill col-12 text-wrap" @onchange="(e) => ChangeTierName(e.Value?.ToString(), pair.Value.ogname)" placeholder="Tier Title" style="background-color: @pair.Value.color; color: @GlobalStyleFunctions.GetMostReadableTextColor(pair.Value.color); @GlobalStyleFunctions.GetTierFontSize(pair.Key, 1.1, true)">
-						</div>
-						<div class="col-12 col-md-9 m-1 d-flex flex-row flex-fill">
-							@if (false) // TODO: the mudcolorpicker takes a while to loadon mobile, but input color is janky as well
-							{
-								<div class="col-6 d-flex flex-fill">
-									<h5 class="mx-1">Color: </h5>
-									<input type="color" value="@pair.Value.color" />	
-								</div>
-							}
-							else
-							{
-								<MudColorPicker Label="Tier Color" @bind-Text="pair.Value.color" Style="@($"color: white;")" Placeholder="Select Color" Class="col-6" />
-							}
-							<div class="d-flex flex-column">
-								<button class="p-1 mx-1 bg-secondary" style="border-bottom: 1px solid; border-color: #ccc; border-top-left-radius: 4px; border-top-right-radius: 4px;" @onclick="() => RearengeTier(pair.Key, -1)"><MudIcon Icon="@Icons.Material.Filled.KeyboardArrowUp" Title="MoveUp" /></button>
-								<button class="p-1 mx-1 bg-secondary" style="border-top: 1px solid; border-color: #ccc; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;" @onclick="() => RearengeTier(pair.Key, 1)"><MudIcon Icon="@Icons.Material.Filled.KeyboardArrowDown" Title="MoveDown" /></button>
+					@foreach (var pair in selected.tiers)
+					{
+						<div @key="@pair.Key" class="d-flex flex-wrap flex-md-nowrap my-2 py-2 px-4 me-sm-3 me-md-0" style="border: 2px solid; border-radius: 10px; border-color: @(pair.Value.color)!important;">
+							<div class="d-flex m-1 flex-column text-center justify-content-center mx-auto col-12 col-sm-3 py-1 py-sm-1 py-md-auto">
+								<input type="text" value="@pair.Value.name" class="rounded py-md-auto py-1 m-0 text-center smoothBlending flex-fill col-12 text-wrap" @onchange="(e) => ChangeTierName(e.Value?.ToString(), pair.Value.ogname)" placeholder="Tier Title" style="background-color: @pair.Value.color; color: @GlobalStyleFunctions.GetMostReadableTextColor(pair.Value.color); @GlobalStyleFunctions.GetTierFontSize(pair.Key, 1.1, true)">
 							</div>
-							<button class="mx-2 bg-danger my-2 px-1 rounded col-3 me-10" @onclick="@(() => Remove(pair.Key))">Remove</button>
+							<div class="col-12 col-md-9 m-1 d-flex flex-row flex-fill">
+								@if (false) // TODO: the mudcolorpicker takes a while to loadon mobile, but input color is janky as well
+								{
+									<div class="col-6 d-flex flex-fill">
+										<h5 class="mx-1">Color: </h5>
+										<input type="color" value="@pair.Value.color" />	
+									</div>
+								}
+								else
+								{
+									if (Loading)
+									{
+									<div class="flex-fill m-1 align-content-center text-center">
+										<MudProgressCircular Color="Color.Surface" Indeterminate="true" />
+									</div>
+									}
+									else
+									{
+									<MudColorPicker Label="Tier Color" @bind-Text="pair.Value.color" Style="@($"color: white;")" Placeholder="Select Color" Class="col-6" />
+									}
+								}
+								<div class="d-flex flex-column">
+									<button class="p-1 mx-1 bg-secondary" style="border-bottom: 1px solid; border-color: #ccc; border-top-left-radius: 4px; border-top-right-radius: 4px;" @onclick="() => RearengeTier(pair.Key, -1)"><MudIcon Icon="@Icons.Material.Filled.KeyboardArrowUp" Title="MoveUp" /></button>
+									<button class="p-1 mx-1 bg-secondary" style="border-top: 1px solid; border-color: #ccc; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;" @onclick="() => RearengeTier(pair.Key, 1)"><MudIcon Icon="@Icons.Material.Filled.KeyboardArrowDown" Title="MoveDown" /></button>
+								</div>
+								<button class="mx-2 bg-danger my-2 px-1 rounded col-3 me-10" @onclick="@(() => Remove(pair.Key))">Remove</button>
+							</div>
 						</div>
-					</div>
-				}
+					}
 				</div>
 			</div>
 		</div>
@@ -56,7 +65,7 @@
 				</div>
 			</div>
 		}
-</div>
+	</div>
 
 @code
 {
@@ -95,15 +104,15 @@
 	protected override async Task OnInitializedAsync()
 	{
 		mobile = OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
-		await OnLoaded.InvokeAsync();
-		Loading = false;
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		if (firstRender) {
+			await Task.Yield();
 			await OnLoaded.InvokeAsync();
 			Loading = false;
+			StateHasChanged();
 		}
 	}
 

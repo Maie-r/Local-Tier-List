@@ -1,18 +1,23 @@
 Overall Status: Requisites functional on Desktop and Android, still could use some QA to find unhandled errors. 
 Remaining work is improvement only with no deadlines
 
-Add a Loading Service and Loading Screens
-
 Add more merging options
+{
+	Allow for more custom options, setting if you want to merge:
+		- Tiers - Accept new tiers, Position only, Attributes only. 
+		- TierItems - Accept new items, Position only, attributes only.
+}
 
 Optimize Mobile performance
 {
 	Drag Ghost operation
-	Tier Edit open delay (Add a lighter color picker)
+	(!) Tier Edit open delay (Add a lighter color picker) (ACTUALLY JUST A DEBUG ISSUE)
 	(!) Slight scrolling lag on showcase mode (due to popups) 
 }
 
 DONE ------------
+
+(!) Add Loading Screens
 
 (!) Local Image Picking:
 {

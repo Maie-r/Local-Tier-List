@@ -17,39 +17,48 @@
 	}
 </a>*@
 
-@if(mobile) @* WOKRS ON MOBILE *@
+@if (false)
 {
-	@*@onpointerover="OverHere" @onpointerout="OuttaHere" @onpointerdown="(e) => StartDrag(e)" @onpointercancel="StopDrag" @onpointerup="StopDrag"*@
-	<div class="clickable draggable" draggable="false" 
-	   @ref="elementRef"
-	   data-tieritem-id="@id"
-	   @onpointerdown="StartDrag"
-	   @onpointerup="StopDrag"
-	   @onpointercancel="StopDrag"
-		   style="touch-action: none!important; @(DragDropApi<TierItem>.GetOver() == item ? "pointer-events: none" : "");">
-		@if (String.IsNullOrEmpty(ImageUsed) || NoImage || imageFailed)
-		{
-			<p class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") unselectable rounded d-flex flex-column flex-fill flex-shrink-1 justify-content-center m-1 text-wrap text-center" style="@GetFontSize(item.name)!; white-space: nowrap; overflow: hidden;">@item.name</p>
-		}
-		else
-		{
-			<img src="@ImageUsed" draggable="false" alt="@item.name" class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") rounded flex-fill m-1" loading="lazy" @onerror="ImageFail"/>
-		}
+	<div class="@(isminimal ? "tieritemsmall" : "tieritem") flex-fill m-1 align-content-center text-center">
+	<MudProgressCircular Color="Color.Surface" Indeterminate="true"/>
 	</div>
 }
 else
 {
-	@* WORKS ON DESKTOP *@
-	<a class="clickable draggable" draggable="true" @ondragover="OverHere" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e)" @ondragend="StopDrag">
-		@if (String.IsNullOrEmpty(ImageUsed) || NoImage || imageFailed)
-		{
-			<p class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") rounded d-flex flex-column flex-fill flex-shrink-1 justify-content-center m-1 text-wrap text-center" style="@GetFontSize(item.name)!; white-space: nowrap; overflow: hidden;">@item.name</p>
-		}
-		else
-		{
-			<img src="@ImageUsed" draggable="false" alt="@item.name" class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") rounded flex-fill m-1 @(item.img is LinkedImage li && li.isLocal ? LinkedImage.SimpliflyLink(li.link) : "")" loading="lazy" @onerror="ImageFail" />
-		}
-	</a>
+	@if (mobile)@* WOKRS ON MOBILE *@
+	{
+		@*@onpointerover="OverHere" @onpointerout="OuttaHere" @onpointerdown="(e) => StartDrag(e)" @onpointercancel="StopDrag" @onpointerup="StopDrag"*@
+		<div class="clickable draggable" draggable="false" 
+		@ref="elementRef"
+		data-tieritem-id="@id"
+		@onpointerdown="StartDrag"
+		@onpointerup="StopDrag"
+		@onpointercancel="StopDrag"
+		style="touch-action: none!important; @(DragDropApi<TierItem>.GetOver() == item ? "pointer-events: none" : "");">
+			@if (String.IsNullOrEmpty(ImageUsed) || NoImage || imageFailed)
+			{
+				<p class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") unselectable rounded d-flex flex-column flex-fill flex-shrink-1 justify-content-center m-1 text-wrap text-center" style="@GetFontSize(item.name)!; white-space: nowrap; overflow: hidden;">@item.name</p>
+			}
+			else
+			{
+				<img src="@ImageUsed" draggable="false" alt="@item.name" class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") rounded flex-fill m-1" loading="lazy" @onerror="ImageFail"/>
+			}
+		</div>
+	}
+	else
+	{
+		@* WORKS ON DESKTOP *@
+		<a class="clickable draggable" draggable="true" @ondragover="OverHere" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e)" @ondragend="StopDrag">
+			@if (String.IsNullOrEmpty(ImageUsed) || NoImage || imageFailed)
+			{
+				<p class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") rounded d-flex flex-column flex-fill flex-shrink-1 justify-content-center m-1 text-wrap text-center" style="@GetFontSize(item.name)!; white-space: nowrap; overflow: hidden;">@item.name</p>
+			}
+			else
+			{
+				<img src="@ImageUsed" draggable="false" alt="@item.name" class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") rounded flex-fill m-1 @(item.img is LinkedImage li && li.isLocal ? LinkedImage.SimpliflyLink(li.link) : "")" loading="lazy" @onerror="ImageFail" />
+			}
+		</a>
+	}
 }
 
 @*<script src="imageHandler.js"></script>*@
@@ -112,6 +121,8 @@ else
 
 	bool mobile = false;
 
+	bool Loading = false;
+
 	string? _blobUrl;
 
 	protected override async Task OnInitializedAsync()
@@ -131,8 +142,11 @@ else
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
-		if (firstRender)
+		if (firstRender){
 			item.ComponentInstance = this;
+			Loading = false;
+			StateHasChanged();
+		}
 	}
 
 	async Task<string> LoadB64Image(byte[] imageBytes, string mimeType)

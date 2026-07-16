@@ -14,8 +14,8 @@
 <div style="overflow: visible">
 	@if (Loading)
 	{
-		<div>
-			<h2>Loading...</h2>
+		<div class="darken-50 align-content-center text-center flex-fill" style="border-radius: 200px; padding: 10px; padding-bottom: 7px">
+			<MudProgressCircular Color="Color.Surface" Indeterminate="true" />
 		</div>
 	}
 	else
@@ -377,8 +377,6 @@
 	protected override async Task OnInitializedAsync()
 	{
 		mobile = OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
-		await OnLoaded.InvokeAsync();
-		Loading = false;
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -386,6 +384,7 @@
 		if (firstRender) {
 			await OnLoaded.InvokeAsync();
 			Loading = false;
+			StateHasChanged();
 		}
 	}
 

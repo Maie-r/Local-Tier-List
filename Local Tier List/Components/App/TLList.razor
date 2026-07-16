@@ -1,5 +1,12 @@
-﻿@using Microsoft.Extensions.Logging
+﻿@using Local_Tier_List.Components.App.Modals
+@using Microsoft.Extensions.Logging
+@using System.Diagnostics
 @inject ILogger<TLList> Logger
+
+@if (Loading)
+{
+	<LoadingDisplay/>	
+}
 
 @if (selectedChild != null)
 {
@@ -133,61 +140,14 @@ else
 	</div>
 }
 
-@switch (CurrentModal)
+@if (CurrentModal != TLListModalType.None)
 {
-	case ModalType.TLEdit:
-		{
-			<div class="maiedal d-flex flex-column text-center justify-content-center">
-				<div class="p-4 darken-85 bgblur-5 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
-					<div class="d-flex p-2 text-end justify-content-end">
-						<a class="clickable" @onclick="async () => { ResetModal(); await OnChangesMade.InvokeAsync(); }">✖</a>
-					</div>
-					<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selectedTierlist!.name" Label="Name" Variant="Variant.Outlined"></MudTextField>
-					<MudColorPicker Label="TierList Color" @bind-Text="selectedTierlist.color" Style="@($"color: {selectedTierlist!.color};")" Placeholder="Select Color" />
-				</div>
-			</div>
-		}
-		break;
-	case ModalType.FolderEdit:
-		{
-			<div class="maiedal d-flex flex-column text-center justify-content-center">
-				<div class="p-4 darken-85 bgblur-5 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
-					<div class="d-flex p-2 text-end justify-content-end">
-						<a class="clickable" @onclick="async () => { selectedFolder = null; CurrentModal = ModalType.None; await OnChangesMade.InvokeAsync(); }">✖</a>
-					</div>
-					<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@selectedFolder!.Name" Label="Name" Variant="Variant.Outlined"></MudTextField>
-					<MudColorPicker Label="Folder Color" @bind-Text="selectedFolder.Color" Style="@($"color: {selectedFolder.Color};")" Placeholder="Select Color" />
-				</div>
-			</div>
-		}
-		break;
-	case ModalType.TLDelete:
-		{
-			<div class="maiedal d-flex flex-column text-center justify-content-center">
-				<div class="p-2 darken-95 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-6">
-					<p> Are you sure you want to permanently remove this tierlist? All tiers and items registered within will be deleted! </p>
-					<div class="d-flex flex-row flex-wrap mx-auto">
-						<button class="mx-2 btn text-light" @onclick="ResetModal">Cancel</button>
-						<button class="mx-2 btn text-danger" @onclick="Delete">Yes, remove it and all items within</button>
-					</div>
-				</div>
-			</div>
-		}
-		break;
-	case ModalType.FolderDelete:
-		{
-			<div class="maiedal d-flex flex-column text-center justify-content-center">
-				<div class="p-2 darken-95 d-flex rounded text-center flex-column justify-content-center mx-auto text-light col-6">
-					<p> Are you sure you want to permanently remove this folder? All tiers and items registered within will be deleted! </p>
-					<div class="d-flex flex-row flex-wrap mx-auto justify-content-center">
-						<button class="mx-2 btn text-light" @onclick="ResetModal">Cancel</button>
-						<button class="mx-2 btn text-warning" @onclick="DeleteFolderOnly">Remove the folder only</button>
-						<button class="mx-2 btn text-danger" @onclick="Delete">Yes, remove the folder and the tierlists within</button>
-					</div>
-				</div>
-			</div>
-		}
-		break;
+	<TLListModals ModalType="CurrentModal" SelectedTierlist="selectedTierlist" SelectedFolder="selectedFolder"
+		OnClose="ResetModal"
+		OnDelete="Delete"
+		OnDeleteFolderOnly="DeleteFolderOnly"
+		OnMerged="AddTierList"
+	></TLListModals>
 }
 
 @code {
@@ -243,19 +203,12 @@ else
 
 	List<TierList> lists;
 
-	enum ModalType {
-		TLEdit,
-		FolderEdit,
-		TLDelete,
-		FolderDelete,
-		None
-	}
-
-	ModalType CurrentModal = ModalType.None;
+	TLListModalType CurrentModal = TLListModalType.None;
 	TLFolder? selectedFolder;
 	TierList? selectedTierlist;
 
 	bool yousure = false;
+	bool Loading = true;
 
 	// Mobile drag threshold
 	CancellationTokenSource? dragDelayCts;
@@ -268,6 +221,14 @@ else
 	protected override async Task OnInitializedAsync()
 	{
 		lists = Folder.Tierlists;
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstrender)
+	{
+		if (!firstrender) return;
+
+		Loading = false;
+		StateHasChanged();
 	}
 
 	string GetDepthIndicator()
@@ -314,10 +275,15 @@ else
 	async Task NewTierList()
 	{
 		var temp = new TierList($"Tierlist {TierService.TierLists.Count + 1}", true);
-		TierService.TierLists.Add(temp);
-		Folder.Tierlists.Add(temp);
+		await AddTierList(temp);
+	}
+
+	async Task AddTierList(TierList tl)
+	{
+		TierService.TierLists.Add(tl);
+		Folder.Tierlists.Add(tl);
 		await OnNewTierList.InvokeAsync();
-		await OnSelect.InvokeAsync(temp);
+		await OnSelect.InvokeAsync(tl);
 		await OnChangesMade.InvokeAsync();
 	}
 
@@ -330,7 +296,7 @@ else
 		else
 		{
 			selectedFolder = folder;
-			CurrentModal = ModalType.FolderDelete;
+			await OpenModal(TLListModalType.FolderDelete);
 		}
 	}
 	async Task TryDelete(TierList tl)
@@ -342,24 +308,24 @@ else
 		else
 		{
 			selectedTierlist = tl;
-			CurrentModal = ModalType.TLDelete;
+			await OpenModal(TLListModalType.TLDelete);
 		}
 	}
 
 	async Task Delete()
 	{
-		if (CurrentModal == ModalType.TLDelete)
+		if (CurrentModal == TLListModalType.TLDelete)
 		{
 			lists.Remove(selectedTierlist);
 			await OnDeletedItems.InvokeAsync(new List<TierList>(){ selectedTierlist });
-			ResetModal();
+			await ResetModal();
 			await OnChangesMade.InvokeAsync();
 		}
-		else if (CurrentModal == ModalType.FolderDelete)
+		else if (CurrentModal == TLListModalType.FolderDelete)
 		{
 			Folder.Folders.Remove(selectedFolder);
 			await OnDeletedItems.InvokeAsync(selectedFolder.Tierlists);
-			ResetModal();
+			await ResetModal();
 			await OnChangesMade.InvokeAsync();
 		}
 		else Logger.LogInformation("Somethings off about the TLList deletion...");
@@ -370,15 +336,29 @@ else
 		var tl = selectedFolder.Tierlists;
 		Folder.Tierlists.AddRange(tl);
 		Folder.Folders.Remove(selectedFolder);
-		ResetModal();
+		await ResetModal();
 		await OnChangesMade.InvokeAsync();
 	}
 
-	void ResetModal()
+	async Task OpenModal(TLListModalType type)
 	{
-		CurrentModal = ModalType.None;
+		if (type == TLListModalType.None)
+		{
+			await ResetModal();
+		}
+		else
+		{
+			CurrentModal = type;
+		}
+		
+	}
+
+	async Task ResetModal()
+	{
+		CurrentModal = TLListModalType.None;
 		selectedTierlist = null;
 		selectedFolder = null;
+		await OnChangesMade.InvokeAsync();
 	}
 
 	string GetFolderBackgroundColor(string Basecolor)
@@ -463,7 +443,7 @@ else
 		else
 		{
 			selectedFolder = Folder.Folders[index];
-			CurrentModal = ModalType.FolderEdit;
+			await OpenModal(TLListModalType.FolderEdit);
 		}
 	}
 
@@ -530,7 +510,7 @@ else
 		else
 		{
 			selectedTierlist = lists[index];
-			CurrentModal = ModalType.TLEdit;
+			await OpenModal(TLListModalType.TLEdit);
 		}
 	}
 
