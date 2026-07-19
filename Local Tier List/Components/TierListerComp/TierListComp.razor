@@ -84,44 +84,14 @@
 							{
 
 								var idx = pair.Value.items.IndexOf(item);
-								@*<ItemContent Context="item">
-								@{
-									// compute index only when needed (IndexOf is O(n) but Virtualize limits rendered items)
-									var idx = pair.Value.items.IndexOf(item);
-								}*@
-								@if (showcase && !mobile)
-								{
-									<MudTooltip class="col-2" Color="Color.Transparent">
-										<ChildContent>
-											<TierItemComp @key="@($"{item.GetHashCode()} + {item.Renderversion}")" item="@item" id="@idx" isminimal="@minimal" NoImage="@NoImg" OverStyle="@(item == DragDropApi<TierItem>.GetOver())"
-												OnItemSelect="Select"
-												OnItemDrag="() => DragDropApi<TierItem>.StartDrag(pair.Value.items, idx)"
-												OnItemDragStop="StopDrag"
-												OnItemOver="() => DragDropApi<TierItem>.OverHere(pair.Value.items, idx)"
-												OnItemOut="DragDropApi<TierItem>.OuttaHere"></TierItemComp>
-										</ChildContent>
-										<TooltipContent>
-											<div class="text-light darken-75 bgblur-5 rounded p-3 m-0" style="border-color: @pair.Value.color; border-width: 1px">
-												<h5>@item.name</h5>
-												@if (!String.IsNullOrEmpty(item.notes))
-												{
-													<p>@((MarkupString)item.notes.Replace("\n", "<br>"))</p>
-												}
-											</div>
-										</TooltipContent>
-									</MudTooltip>
-								}
-								else
-								{
-									<TierItemComp @key="@($"{item.GetHashCode()} + {item.Renderversion}")" item="@item" id="@idx" isminimal="@minimal" NoImage="@NoImg" OverStyle="@(item == DragDropApi<TierItem>.GetOver())"
+								<TierItemComp @key="@($"{item.GetHashCode()} + {item.Renderversion}")" item="@item" id="@idx" isminimal="@minimal" NoImage="@NoImg" OverStyle="@(item == DragDropApi<TierItem>.GetOver())"
 									OnItemSelect="Select"
 									OnItemDrag="() => DragDropApi<TierItem>.StartDrag(pair.Value.items, idx)"
 									OnItemDragStop="StopDrag"
 									OnItemOver="() => DragDropApi<TierItem>.OverHere(pair.Value.items, idx)"
-									OnItemOut="DragDropApi<TierItem>.OuttaHere"></TierItemComp>
-
-								}
-								@*</ItemContent>*@
+									OnItemOut="DragDropApi<TierItem>.OuttaHere"
+									Showcase="showcase"
+								></TierItemComp>
 							}
 							@*@</Virtualize>*@
 							@if (!showcase) //<!-- ADD BUTTON -->
@@ -518,8 +488,8 @@
 			/*foreach (var item in selecitem.parent.items)
 			{
 				Logger.LogInformation(item.name);
-			}*/
-			Logger.LogInformation(selecitem.parent.items.Contains(selecitem).ToString());
+				}*/
+									Logger.LogInformation(selecitem.parent.items.Contains(selecitem).ToString());
 			selecitem.name = GetUniqueName(selecitem, selecitem.name);
 		}
 		selecitem = null;
@@ -605,6 +575,11 @@
 	}
 
 	// ------------ UPDATING LAST MODIFIED
+	void UpdateModified(TierItem item)
+	{
+		selected.ModifiedNow(item);
+	}
+
 	void UpdateModifiedItem()
 	{
 		if (selecitem != null)
@@ -700,6 +675,7 @@
 			Logger.LogInformation("Couldn't perform dragdrop Operation: No Dragged Item found!!");
 			return;
 		}
+
 		var over = DragDropApi<TierItem>.GetOver();
 
 
@@ -715,6 +691,7 @@
 					OverTier.Add(dragged);
 					if (DragDropApi<TierItem>.GetDragged() == dragged)
 						DragDropApi<TierItem>.GetDraggedList()!.Remove(dragged);
+					UpdateModified(dragged);
 					DragDropApi<TierItem>.StopDrag(DragDropBehaviour.Cancel);
 				}//*/
 				else
@@ -728,16 +705,15 @@
 						dragged.parent = over.parent;
 						over.parent = temp3;
 					}
+					UpdateModified(dragged);
+					UpdateModified(over);
 				}
 
 
 			}
-			else //if (dragged == over || over.parent != selected.tiers[overtier])
+			else
 			{
-				// DragDropApi<TierItem>.GetOver().parent != selected.tiers[overtier] && selected.tiers[overtier].items.Count <= 0  it just failed to remove the dragover item, so going to the tierlist is priority
 				Logger.LogInformation("Regular Tier-Based DragDrop!");
-				//Logger.LogInformation(DragDropApi<TierItem>.GetOver().parent.name + " != " + selected.tiers[overtier].name);
-				var tempdragged = dragged;
 				//Logger.LogInformation("Got Dragged");
 				var overlist = selected.tiers[overtier];
 				Logger.LogInformation($"got list {overlist.name}");
@@ -750,8 +726,11 @@
 				{
 					Logger.LogInformation("Failed tier item swap");
 				}
-				else 
-					tempdragged.parent = overlist;
+				else
+				{
+					dragged.parent = overlist;
+					UpdateModified(dragged);
+				}
 
 				//Logger.LogInformation(overlist.AsString());
 
@@ -762,7 +741,11 @@
 			var res = await Task.Run(() => DragDropApi<TierItem>.StopDrag(DragDropBehaviour.Insert));
 			if (!res)
 				Logger.LogInformation("DragDrop Failed: Couldn't recognise over tier, and failed fallback method");
-			else Logger.LogInformation("Fallback Tier-Based DragDrop");
+			else 
+			{
+				Logger.LogInformation("Fallback Tier-Based DragDrop");
+				UpdateModified(dragged);
+			}
 		}
 		else
 		{
@@ -779,8 +762,6 @@
 		}
 		overtier = "";
 		StateHasChanged();
-
-
 	}
 
 	async Task OnPointerMoveOverTier(PointerEventArgs e, KeyValuePair<string, Tier> pair) // Mobile Only Imprementation

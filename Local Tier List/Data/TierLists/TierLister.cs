@@ -80,6 +80,13 @@ namespace Local_Tier_List.Data.TierLists
             this.name = name;
             tiers = new Dictionary<string, Tier>();
         }
+        public TierList(string name, string color)
+        {
+            this.name = name;
+            this.color = color;
+            tiers = new Dictionary<string, Tier>();
+        }
+
 
         public TierList(string name, bool templatefill)
         {

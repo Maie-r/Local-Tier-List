@@ -27,35 +27,89 @@ else
 {
 	@if (mobile)@* WOKRS ON MOBILE *@
 	{
-		@*@onpointerover="OverHere" @onpointerout="OuttaHere" @onpointerdown="(e) => StartDrag(e)" @onpointercancel="StopDrag" @onpointerup="StopDrag"*@
-		<div class="clickable draggable" draggable="false" 
-		@ref="elementRef"
-		data-tieritem-id="@id"
-		@onpointerdown="StartDrag"
-		@onpointerup="StopDrag"
-		@onpointercancel="StopDrag"
-		style="touch-action: none!important; @(DragDropApi<TierItem>.GetOver() == item ? "pointer-events: none" : "");">
-			@if (String.IsNullOrEmpty(ImageUsed) || NoImage || imageFailed)
-			{
-				<p class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") unselectable rounded d-flex flex-column flex-fill flex-shrink-1 justify-content-center m-1 text-wrap text-center" style="@GetFontSize(item.name)!; white-space: nowrap; overflow: hidden;">@item.name</p>
-			}
-			else
-			{
-				<img src="@ImageUsed" draggable="false" alt="@item.name" class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") rounded flex-fill m-1" loading="lazy" @onerror="ImageFail"/>
-			}
-		</div>
+		@if (false)
+		{
+			<MudTooltip class="col-2" Color="Color.Transparent">
+				<ChildContent>
+					@if (String.IsNullOrEmpty(ImageUsed) || NoImage || imageFailed)
+					{
+						<p class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") unselectable rounded d-flex flex-column flex-fill flex-shrink-1 justify-content-center m-1 text-wrap text-center" style="@GetFontSize(item.name)!; white-space: nowrap; overflow: hidden;">@item.name</p>
+					}
+					else
+					{
+						<img src="@ImageUsed" draggable="false" alt="@item.name" class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") rounded flex-fill m-1" loading="lazy" @onerror="ImageFail" />
+					}
+				</ChildContent>
+				<TooltipContent>
+					<div class="text-light darken-75 bgblur-5 rounded p-3 m-0" style="border-color: @item.parent.color; border-width: 1px">
+						<h5>@item.name</h5>
+						@if (!String.IsNullOrEmpty(item.notes))
+						{
+							<p>@((MarkupString)item.notes.Replace("\n", "<br>"))</p>
+						}
+					</div>
+				</TooltipContent>
+			</MudTooltip>
+		}
+		else
+		{
+			@*@onpointerover="OverHere" @onpointerout="OuttaHere" @onpointerdown="(e) => StartDrag(e)" @onpointercancel="StopDrag" @onpointerup="StopDrag"*@
+			<div class="clickable draggable" draggable="false"
+				 @ref="elementRef"
+				 data-tieritem-id="@id"
+				 @onpointerdown="StartDrag"
+				 @onpointerup="StopDrag"
+				 @onpointercancel="StopDrag"
+				 style="touch-action: none!important; @(DragDropApi<TierItem>.GetOver() == item ? "pointer-events: none" : "");">
+				@if (String.IsNullOrEmpty(ImageUsed) || NoImage || imageFailed)
+				{
+					<p class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") unselectable rounded d-flex flex-column flex-fill flex-shrink-1 justify-content-center m-1 text-wrap text-center" style="@GetFontSize(item.name)!; white-space: nowrap; overflow: hidden;">@item.name</p>
+				}
+				else
+				{
+					<img src="@ImageUsed" draggable="false" alt="@item.name" class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") rounded flex-fill m-1" loading="lazy" @onerror="ImageFail" />
+				}
+			</div>
+		}
 	}
 	else
 	{
 		@* WORKS ON DESKTOP *@
 		<a class="clickable draggable" draggable="true" @ondragover="OverHere" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e)" @ondragend="StopDrag">
-			@if (String.IsNullOrEmpty(ImageUsed) || NoImage || imageFailed)
+			@if (Showcase)
 			{
-				<p class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") rounded d-flex flex-column flex-fill flex-shrink-1 justify-content-center m-1 text-wrap text-center" style="@GetFontSize(item.name)!; white-space: nowrap; overflow: hidden;">@item.name</p>
+				<MudTooltip class="col-2" Color="Color.Transparent">
+					<ChildContent>
+						@if (String.IsNullOrEmpty(ImageUsed) || NoImage || imageFailed)
+						{
+							<p class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") rounded d-flex flex-column flex-fill flex-shrink-1 justify-content-center m-1 text-wrap text-center" style="@GetFontSize(item.name)!; white-space: nowrap; overflow: hidden;">@item.name</p>
+						}
+						else
+						{
+							<img src="@ImageUsed" draggable="false" alt="@item.name" class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") rounded flex-fill m-1 @(item.img is LinkedImage li && li.isLocal ? LinkedImage.SimpliflyLink(li.link) : "")" loading="lazy" @onerror="ImageFail" />
+						}
+					</ChildContent>
+					<TooltipContent>
+						<div class="text-light darken-75 bgblur-5 rounded p-3 m-0" style="border-color: @item.parent.color; border-width: 1px">
+							<h5>@item.name</h5>
+							@if (!String.IsNullOrEmpty(item.notes))
+							{
+								<p>@((MarkupString)item.notes.Replace("\n", "<br>"))</p>
+							}
+						</div>
+					</TooltipContent>
+				</MudTooltip>
 			}
 			else
 			{
-				<img src="@ImageUsed" draggable="false" alt="@item.name" class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") rounded flex-fill m-1 @(item.img is LinkedImage li && li.isLocal ? LinkedImage.SimpliflyLink(li.link) : "")" loading="lazy" @onerror="ImageFail" />
+				@if (String.IsNullOrEmpty(ImageUsed) || NoImage || imageFailed)
+				{
+					<p class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") rounded d-flex flex-column flex-fill flex-shrink-1 justify-content-center m-1 text-wrap text-center" style="@GetFontSize(item.name)!; white-space: nowrap; overflow: hidden;">@item.name</p>
+				}
+				else
+				{
+					<img src="@ImageUsed" draggable="false" alt="@item.name" class="@(isminimal ? "tieritemsmall" : "tieritem") @(OverStyle ? "OverItem" : "") rounded flex-fill m-1 @(item.img is LinkedImage li && li.isLocal ? LinkedImage.SimpliflyLink(li.link) : "")" loading="lazy" @onerror="ImageFail" />
+				}
 			}
 		</a>
 	}
@@ -94,6 +148,9 @@ else
 
 	[Parameter]
 	public bool OverStyle { get; set; }
+
+	[Parameter]
+	public bool Showcase { get; set; }
 
 	[Parameter]
 	public EventCallback<TierItem> OnItemSelect { get; set; }

@@ -17,7 +17,6 @@ namespace Local_Tier_List.Data.App
     {
         Import,
         Export,
-        Merge,
         None,
     }
 }

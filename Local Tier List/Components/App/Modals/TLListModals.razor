@@ -1,4 +1,5 @@
 ﻿@using Local_Tier_List.Data.App
+@using System.Text.Json
 
 @if (Loading)
 {
@@ -13,8 +14,8 @@
 						<div class="d-flex p-2 text-end justify-content-end">
 							<a class="clickable" @onclick="OnClose">✖</a>
 						</div>
-						<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@SelectedTierlist!.name" Label="Name" Variant="Variant.Outlined"></MudTextField>
-						<MudColorPicker Label="TierList Color" @bind-Text="SelectedTierlist.color" Style="@($"color: {SelectedTierlist!.color};")" Placeholder="Select Color" />
+						<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@SelectedTierlist!.name" @bind-Value:after="() => SelectedTierlist.ModifiedNow()" Label="Name" Variant="Variant.Outlined"></MudTextField>
+						<MudColorPicker Label="TierList Color" @bind-Text="SelectedTierlist.color" @bind-Text:after="() => SelectedTierlist.ModifiedNow()" Style="@($"color: {SelectedTierlist!.color};")" Placeholder="Select Color" />
 						<div class="row p-0 col-12 mx-auto d-flex flex-fill my-1">
 							<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
 								<h5 class="clickableOuter flex-fill p-2 m-0 text-center rounded btn bg-highlight align-content-center text-light" @onclick="@(() => IsMerging = true)"> Merge with another Tierlist </h5>
@@ -29,28 +30,154 @@
 				</div>
 				@if (IsMerging)
 				{
-				<div class="maiedal d-flex flex-column text-center justify-content-center">
+				<div class="maiedal d-flex flex-column text-center ">
 					<div class="p-4 darken-85 bgblur-5 d-flex text-center flex-column justify-content-center mx-auto text-light col-12 shadow col-md-6" style="border-radius: 2vw">
-						<p> Paste below the JSON string of the Tierlist you want to merge with the @SelectedTierlist.name Tierlist! </p><br />
+						<h5> Tierlist Merger </h5>
+						<p> Paste below the JSON string of the Tierlist you want to merge with the @SelectedTierlist.name Tierlist! </p>
+						<br />
 						<p> Incoming: </p>
-						<textarea class="font-monospace bg-dark text-light col-12 mb-2" style="height:200px;" @bind="mergeString"></textarea>
+						<textarea class="font-monospace bg-dark text-light col-12 mb-2 p-2" style="height:200px; border-radius: 20px;" @bind="mergeString"></textarea>
 						<div>
 							<p class="text-danger">@mergeErr</p>
 						</div>
 						<div class="my-5">
-							<MudSelect @bind-Value="currentMergeBehaviour" Label="Merging Behaviour">
-								@foreach (var kv in MergeOptions)
-								{
-									<MudSelectItem Value="kv.Value">@kv.Key</MudSelectItem>
-								}
-							</MudSelect>
+							<div class="row justify-content-center g-3 my-2">
+								<div class="col-12 col-md-6">
+									<MudSelect @bind-Value="mergeBasis" @bind-Value:after="SetMergeBasis" Label="Merging Behaviour">
+										@foreach (var kv in SimpleBehaviour)
+										{
+											<MudSelectItem Value="kv.Key">
+												<MudStack Spacing="0">
+													<MudText Typo="Typo.body1">@kv.Key</MudText>
+													<MudText Typo="Typo.caption">
+														@kv.Value
+													</MudText>
+												</MudStack>
+											</MudSelectItem>
+										}
+									</MudSelect>
+								</div>
+								<div class="col-12 col-md-6">
+									<MudSelect @bind-Value="mergeScopeBasis" @bind-Value:after="SetMergeBasis" Label="Merging Scope">
+										@foreach (var kv in SimpleScopeBehaviour)
+										{
+											<MudSelectItem Value="kv.Key">
+												<MudStack Spacing="0">
+													<MudText Typo="Typo.body1">@kv.Key</MudText>
+													<MudText Typo="Typo.caption">
+														@kv.Value
+													</MudText>
+												</MudStack>
+											</MudSelectItem>
+										}
+									</MudSelect>
+								</div>
+							</div>
 						</div>
+						<MudSwitch T="bool"
+								   @bind-Value="AdvancedMerge"
+								   Color="Color.Primary"
+								   Class="mb-2">
+							Advanced Mode
+						</MudSwitch>
+						<div class="merge-options @(AdvancedMerge ? "d-flex" : "d-none") flex-fill flex-wrap">
+							<div class="merge-section col-12 darken-75">
+								<h5> Tierlist </h5>
+								<MudText Typo="Typo.caption" Color="Color.Surface">
+									How the Tierlist name and color should be merged.
+								</MudText>
+								<div >
+									<MudSelect @bind-Value="mergeOptions.TierListAttributes" Label="Attributes Merge" Modal="true" Class="my-2">
+										@foreach (var kv in MergeTypes)
+										{
+											<MudSelectItem Value="kv.Value">@kv.Key</MudSelectItem>
+										}
+									</MudSelect>
+								</div>
+								<MudSwitch T="bool"
+										   @bind-Value="mergeOptions.KeepData"
+										   Color="Color.Primary">
+									<div class="d-flex flex-column text-start">
+										<MudText Color="Color.Surface">
+											Preserve Existing Data
+										</MudText>
+										<MudText Typo="Typo.caption" Color="Color.Default">
+											Override merge behaviour to avoid empty values if possible
+										</MudText>
+									</div>
+								</MudSwitch>
+								</div>
+							<div class="merge-section col-12 darken-75">
+									<h5> Tiers </h5>
+									<MudText Typo="Typo.caption" Color="Color.Surface">
+										How the Tiers should be matched and merged.
+									</MudText>
+									<div class="row justify-content-center g-3 my-2">
+										<div class="col-12 col-md-6">
+											<MudSelect @bind-Value="mergeOptions.TierPositions" Label="Position Merge Behaviour" Class="mx-1">
+												@foreach (var kv in MergeTypes)
+												{
+													<MudSelectItem Value="kv.Value">@kv.Key</MudSelectItem>
+												}
+											</MudSelect>
+										</div>
+										<div class="col-12 col-md-6">
+											<MudSelect @bind-Value="mergeOptions.TierAttributes" Label="Attributes Merge Behaviour" Class="mx-1">
+												@foreach (var kv in MergeTypes)
+												{
+													<MudSelectItem Value="kv.Value">@kv.Key</MudSelectItem>
+												}
+											</MudSelect>
+										</div>
+									</div>
+									<MudSwitch T="bool"
+											   @bind-Value="mergeOptions.AllowNewTiers"
+											   Color="Color.Primary">
+										Accept New Tiers
+									</MudSwitch>
+								</div>
+							<div class="merge-section col-12 darken-75">
+									<h5> Items </h5>
+									<MudText Typo="Typo.caption" Color="Color.Surface">
+										How the TierItems are merged.
+									</MudText>
+									<div class="row justify-content-center g-3 my-2">
+										<div class="col-12 col-md-6">
+											<MudSelect @bind-Value="mergeOptions.ItemPositions" Label="Position Merge" Class="mx-1 col-6 d-flex flex-wrap">
+												@foreach (var kv in MergeTypes)
+												{
+													<MudSelectItem Value="kv.Value">@kv.Key</MudSelectItem>
+												}
+											</MudSelect>
+										</div>
+										<div class="col-12 col-md-6">
+											<MudSelect @bind-Value="mergeOptions.ItemAttributes" Label="Attributes Merge" Class="mx-1 col-6 d-flex flex-wrap">
+												@foreach (var kv in MergeTypes)
+												{
+													<MudSelectItem Value="kv.Value">@kv.Key</MudSelectItem>
+												}
+											</MudSelect>
+										</div>
+										<div class="col-12 col-md-6">
+											<MudSelect @bind-Value="mergeOptions.NewItemBehaviour" Label="New Item Handling" Class="mx-1 col-6 d-flex flex-wrap">
+												@foreach (var kv in MergeNewItemBehaviour)
+												{
+													<MudSelectItem Value="kv.Value" Disabled="@((kv.Value == NewTierItemBehaviour.AllowOnlyInNewTiers) && (!mergeOptions.AllowNewTiers))">@kv.Key</MudSelectItem>
+												}
+											</MudSelect>
+										</div>
+									</div>
+								</div>
+						</div>
+
 						<div class="d-flex flex-row flex-wrap mx-auto">
 							<button class="mx-2 border-1 border-white text-light rounded btn p-2" @onclick="() => IsMerging = false">Cancel</button>
 							<button class="mx-2 bg-highlight rounded btn p-2 text-light" @onclick="TryMerge">Merge</button>
 						</div>
 					</div>
+					
 				</div>
+
 				}
 			}
 			break;
@@ -96,6 +223,44 @@
 			break;
 }
 
+<style>
+	.merge-options {
+		margin: auto;
+	}
+
+	.merge-section {
+		padding: 1.25rem;
+		margin-bottom: 1rem;
+		border: 1px solid var(--mud-palette-lines-default);
+		border-radius: 8px;
+		border-top: 2px solid;
+		transition: height 0.5;
+	}
+
+		.merge-section h5 {
+			margin-bottom: 1rem;
+			font-weight: 600;
+		}
+
+	.merge-switch {
+		margin-top: 1rem;
+	}
+
+		.merge-switch label {
+			font-weight: 500;
+		}
+
+	.merge-description {
+		margin: .35rem 0 0 0;
+		font-size: .85rem;
+		opacity: .7;
+	}
+
+	.merge-divider {
+		margin-top: 1rem;
+	}
+</style>
+
 @code {
 	[Parameter]
 	public required TLListModalType ModalType { get; set; }
@@ -119,17 +284,44 @@
 	bool Innerdeletecall = false;
 
 	// merging
-	MergeBehaviour currentMergeBehaviour = MergeBehaviourTable.SmartMerge;
-	Dictionary<string, MergeBehaviour> MergeOptions = new Dictionary<string, MergeBehaviour>()
-	{
-		{ "Smart Merge", MergeBehaviourTable.SmartMerge },
-		{ "Priority on Incoming", MergeBehaviourTable.MergeIntoCurrent },
-		{ "Smart Merge (Shallow)", MergeBehaviourTable.SmartMergeShallow },
-		{ "Priority on Incoming (Shallow)", MergeBehaviourTable.MergeIntoCurrentShallow },
-	};
+	MergeOptions mergeOptions = new();
 	bool IsMerging = false;
+	bool AdvancedMerge = false;
 	string mergeString;
 	string mergeErr = "";
+	Dictionary<string, MergeBehaviour> MergeTypes = new()
+	{
+		{"None", MergeBehaviourTable.None},
+		{"Incoming", MergeBehaviourTable.Incoming},
+		{"Smart", MergeBehaviourTable.Smart},
+	};
+	Dictionary<string, NewTierItemBehaviour> MergeNewItemBehaviour = new()
+	{
+		{"Don't Accept Any New Items", NewTierItemBehaviour.DontAllowAnyNew},
+		{"Accept All New Items", NewTierItemBehaviour.AllowAllNew},
+		{"Accept and Group All New Items", NewTierItemBehaviour.AllowAllAndGroup},
+		{"Accept only in Existing Tiers", NewTierItemBehaviour.AllowOnlyInExistingTiers},
+		{"Accept only in New Tiers", NewTierItemBehaviour.AllowOnlyInNewTiers},
+	};
+	string mergeBasis = "None";
+	Dictionary<string, string> SimpleBehaviour = new()
+	{
+		{"None", "Prioritize the 'current' Tierlist" },
+		{"Incoming", "Prioritize the 'incoming' Tierlist"},
+		{"Smart", "Prioritize the elements changed the latest"},
+		//{"Custom", "Set different behaviours for each type of element (Tiers, items)"}
+	};
+
+	string mergeScopeBasis = "All";
+	Dictionary<string, string> SimpleScopeBehaviour = new()
+	{
+		{"All", "Merge Positions and Attributes, and allow new elements" },
+		{"Positions", "Merge only Positions, and allow new elements"},
+		{"Attributes", "Merge only Attributes, and allow new elements"},
+		{"All-Existing", "Merge Positions and Attributes only of existing elements" },
+		{"Positions-Existing", "Merge only Positions of existing elements"},
+		{"Attributes-Existing", "Merge only Attributes if existing elements"},
+	};
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
@@ -169,16 +361,63 @@
 					mergeErr = "The second merge string has an invalid amount of tierlists, paste only ONE tierlist to merge at a time.";
 					return;
 				}
-				var t3 = TLMerger.MergeTierLists(currentMergeBehaviour, t1[0], t2[0]);
+				var t3 = TLMerger.MergeTierLists(t1[0], t2[0], mergeOptions);
+				t3.name += " (Merged)";
 				await OnClose.InvokeAsync();
 				await OnMerged.InvokeAsync(t3);
 			}
-			catch (Exception e)
+			catch (JsonException e)
 			{
-				mergeErr = e.Message;
+				mergeErr = "Invalid import json, please insert a valid json.";
 			}
 		}
-		else mergeErr = "Please fill both fields";
+		else mergeErr = "Fill the field with json data representing a Tierlist";
+	}
+
+	void SetMergeBasis()
+	{
+		if (mergeBasis == "Custom") AdvancedMerge = true;
+		else
+		{
+			var Basis = MergeTypes[mergeBasis];
+
+			MergeBehaviour Positions = MergeBehaviourTable.None;
+			MergeBehaviour Attributes = MergeBehaviourTable.None;
+			bool allowNew = true;
+			NewTierItemBehaviour newItemBehaviour = NewTierItemBehaviour.AllowAllNew;
+
+			if (mergeScopeBasis.EndsWith("Existing"))
+			{
+				allowNew = false;
+				newItemBehaviour = NewTierItemBehaviour.DontAllowAnyNew;
+			}
+			switch (mergeScopeBasis)
+			{
+				case "All" or "All-Existing":
+					Positions = Basis;
+					Attributes = Basis;
+					break;
+				case "Positions" or "Positions-Existing":
+					Positions = Basis;
+					break;
+				case "Attributes" or "Attributes-Existing":
+					Attributes = Basis;
+					break;
+			}
+
+			mergeOptions.TierListAttributes = MergeBehaviourTable.None;
+			mergeOptions.TierPositions = Positions;
+			mergeOptions.TierAttributes = Attributes;
+			mergeOptions.ItemPositions = Positions;
+			mergeOptions.ItemAttributes = Attributes;
+			mergeOptions.AllowNewTiers = allowNew;
+			mergeOptions.NewItemBehaviour = newItemBehaviour;
+		}
+	}
+
+	void SetMergeScopeBasis()
+	{
+		var Basis = MergeTypes[mergeBasis];
 	}
 }
 
