@@ -90,7 +90,7 @@
 									OnItemDragStop="StopDrag"
 									OnItemOver="() => DragDropApi<TierItem>.OverHere(pair.Value.items, idx)"
 									OnItemOut="DragDropApi<TierItem>.OuttaHere"
-									Showcase="showcase"
+									Showcase="@(showcase && DragDropApi<TierItem>.GetDragged() == null)"
 								></TierItemComp>
 							}
 							@*@</Virtualize>*@

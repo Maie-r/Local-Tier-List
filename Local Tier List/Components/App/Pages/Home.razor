@@ -19,7 +19,7 @@
 				<MudIcon Icon="@Icons.Material.Filled.Folder" Title="Data Folder"/>
 				</button>
 		}
-		<div class="form-check form-switch">
+		<div class="form-check form-switch ms-4">
 			<input class="form-check-input" type="checkbox" id="editform" checked="@editTierlists"
 				   @onchange="() => editTierlists = !editTierlists">
 			<label class="form-check-label" for="editform">
@@ -120,6 +120,13 @@
 	}
 </div>
 
+@if (Loading)
+{
+	<div class="d-none">
+		<MudColorPicker Label="eh" @bind-Text="preload" Placeholder="Select Color" />
+	</div>
+}
+
 
 @code
 {
@@ -132,7 +139,7 @@
 
 	IOModalType CurrentModal = IOModalType.None;
 
-	bool Loading = false;
+	bool Loading = true;
 	string LoadingMessage = "Loading...";
 
 	CancellationTokenSource? _saveCts;
@@ -243,4 +250,7 @@
 		Snackbar.Add(message, Severity.Error);
 	}
 
+
+
+	string preload;
 }

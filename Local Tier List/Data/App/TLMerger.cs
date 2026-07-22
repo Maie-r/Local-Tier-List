@@ -27,7 +27,7 @@ namespace Local_Tier_List.Data.App
 
             var itemmap = MergeBehaviour.GetItemMap(current.tiers, incoming.tiers, usedTiers, options.NewItemBehaviour);
             var itemPos = options.ItemPositions.MergeItemPositionsOnly(itemmap);
-            var itemAtt = options.ItemAttributes.MergeItemAttributesOnly(itemmap, options.KeepData);
+            var itemAtt = options.ItemAttributes.MergeItemAttributesOnly(itemmap, options.ItemAttributeWhitelist, options.KeepData);
             var usedItems = new Dictionary<string, MergeBehaviour.ItemPosition>(itemPos);
             foreach (var pair in itemAtt)
                 usedItems[pair.Key].item = pair.Value.item;
@@ -117,7 +117,7 @@ public abstract class MergeBehaviour
         var newitembehaviour = AcceptNewElements ? NewTierItemBehaviour.AllowAllNew : NewTierItemBehaviour.DontAllowAnyNew;
         var itemmap = GetItemMap(current.tiers, incoming.tiers, restiers, newitembehaviour);
         var resitemsPos = MergeItemPositionsOnly(itemmap);
-        var resitemsAtt = MergeItemAttributesOnly(itemmap, true);
+        var resitemsAtt = MergeItemAttributesOnly(itemmap, MergeOptions.ItemAttributeWhilelistBase, true);
         var useditems = new Dictionary<string, ItemPosition>(resitemsPos);
         foreach (var pair in resitemsAtt)
             useditems[pair.Key].item = pair.Value.item;
@@ -337,21 +337,80 @@ public abstract class MergeBehaviour
         return shallowRes;
     }
 
-    internal virtual Dictionary<string, ItemPosition> MergeItemAttributesOnly(Dictionary<string, ItemPositionDuo> itemMap, bool KeepData)
+    internal virtual Dictionary<string, ItemPosition> MergeItemAttributesOnly(Dictionary<string, ItemPositionDuo> itemMap, IEnumerable<string> whitelist, bool KeepData)
     {
         var shallowRes = new Dictionary<string, ItemPosition>();
         foreach (var key in itemMap.Keys)
         {
-            ItemPosition u;
-            if (KeepData)
-                u = DataKeepMerge(itemMap[key]);
-            else
-                u = Compare(itemMap[key]);
-
+            ItemPosition u = FilterAttributes(itemMap[key], whitelist, KeepData);
             shallowRes.Add(u.item.name, u);
         }
 
         return shallowRes;
+    }
+
+    internal virtual ItemPosition FilterAttributes(ItemPositionDuo duo, IEnumerable<string> whitelist, bool KeepData)
+    {
+        if (duo.current == null)
+        {
+            if (duo.incoming == null)
+                throw new ArgumentException("[TLMERGE] No items were bound to an Item duo!");
+            else
+                return duo.incoming;
+        }
+        else
+        {
+            if (duo.incoming == null)
+                return duo.current;
+        }
+        TierItem used = Compare(duo.current.item, duo.incoming.item);
+        TierItem fallback = used == duo.current.item ? duo.incoming.item : duo.current.item;
+        TierItem current = duo.current.item;
+
+        ItemPosition res = new ItemPosition() { item = new TierItem(used.name) };
+        if (whitelist.Contains("Image"))
+        {
+            if (KeepData && (used.img == null ||
+            used.img is LinkedImage li && String.IsNullOrEmpty(li.link) ||
+            used.img is MemoryImage mi && (mi.bytes == null || mi.bytes.Length <= 0)))
+            {
+                res.item.img = fallback.img;
+            }
+            else res.item.img = used.img;
+        }
+        else res.item.img = current.img;
+
+        if (whitelist.Contains("Tags"))
+        {
+            if (KeepData)
+            {
+                if (used.tags == null || used.tags.Length <= 0)
+                    res.item.tags = fallback.tags;
+                else if (fallback.tags == null || fallback.tags.Length <= 0)
+                    res.item.tags = used.tags;
+                else
+                {
+                    var map = used.tags.ToHashSet();
+                    foreach (var tag in fallback.tags)
+                    {
+                        map.Add(tag);
+                    }
+                    map.RemoveWhere(e => String.IsNullOrEmpty(e));
+                    res.item.tags = map.ToArray();
+                }
+            }
+            else res.item.tags = used.tags;
+        }
+        else res.item.tags = current.tags;
+
+        if (whitelist.Contains("Notes"))
+        {
+            if (KeepData) res.item.notes = string.IsNullOrEmpty(used.notes) ? fallback.notes : used.notes;
+            else res.item.notes = used.notes;
+        }
+        else res.item.notes = current.notes;
+
+        return res;
     }
 
     internal virtual ItemPosition DataKeepMerge(ItemPositionDuo duo)
@@ -557,6 +616,15 @@ public class MergeOptions
     /// Set to "AllowAllNew" by default
     /// </remarks>
     public NewTierItemBehaviour NewItemBehaviour { get; set; } = NewTierItemBehaviour.AllowAllNew;
+    public IEnumerable<string> ItemAttributeWhitelist { get; set; } = ItemAttributeWhilelistBase;
+
+    public static List<string> ItemAttributeWhilelistBase 
+    {
+        get
+        {
+            return new List<string>() { "Image", "Tags", "Notes" };
+        }
+    }
 
     // idk if I should do one just for the categories, if I do I think I might as well make every single field customizable
 }
@@ -578,8 +646,6 @@ public static class MergeBehaviourTable
     /// </summary>
     public static MergeBehaviour Smart => MB_Smart.Instance;
 }
-
-
 
 internal class MB_Current : MergeBehaviour
 {
