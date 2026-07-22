@@ -15,7 +15,7 @@
 							<a class="clickable" @onclick="OnClose">✖</a>
 						</div>
 						<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@SelectedTierlist!.name" @bind-Value:after="() => SelectedTierlist.ModifiedNow()" Label="Name" Variant="Variant.Outlined"></MudTextField>
-						<MudColorPicker Label="TierList Color" @bind-Text="SelectedTierlist.color" @bind-Text:after="() => SelectedTierlist.ModifiedNow()" Style="@($"color: {SelectedTierlist!.color};")" Placeholder="Select Color" />
+						<MudColorPicker Label="TierList Color" @bind-Text="SelectedTierlist.color" @bind-Text:after="() => SelectedTierlist.ModifiedNow()" Style="@($"color: {GlobalStyleFunctions.GetMostReadableTextColor(SelectedTierlist!.color)}; background-color: {SelectedTierlist!.color}; border-radius: 50px; padding: 1vh;")" Class="my-2" Placeholder="Select Color" />
 						<div class="row p-0 col-12 mx-auto d-flex flex-fill my-1">
 							<div class="d-flex col-12 p-0 flex-nowrap flex-fill flex-row">
 								<h5 class="clickableOuter flex-fill p-2 m-0 text-center rounded btn bg-highlight align-content-center text-light" @onclick="@(() => IsMerging = true)"> Merge with another Tierlist </h5>
@@ -189,7 +189,7 @@
 							<a class="clickable" @onclick="OnClose">✖</a>
 						</div>
 						<MudTextField Class="flex-fill center-input thick-outline mx-2" Style="color: white;" @bind-Value="@SelectedFolder!.Name" Label="Name" Variant="Variant.Outlined"></MudTextField>
-						<MudColorPicker Label="Folder Color" @bind-Text="SelectedFolder.Color" Style="@($"color: {SelectedFolder.Color};")" Placeholder="Select Color" />
+					<MudColorPicker Label="Folder Color" @bind-Text="SelectedFolder.Color" Style="@($"color: {GlobalStyleFunctions.GetMostReadableTextColor(SelectedFolder!.Color)}; background-color: {SelectedFolder!.Color}; border-radius: 50px; padding: 1vh;")" Class="my-2" Placeholder="Select Color" />
 					</div>
 				</div>
 			}

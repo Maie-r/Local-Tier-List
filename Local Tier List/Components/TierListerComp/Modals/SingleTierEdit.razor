@@ -23,7 +23,7 @@ else
 				<div class="d-flex flex-column text-center justify-content-center mx-auto py-1 py-sm-1 py-md-auto">
 					<input type="text" value="@selectier.name" class="rounded fs-2 py-md-auto py-1 m-0 text-center flex-fill col-12 smoothBlending text-wrap" @onchange="(e) => ChangeTierName(e.Value?.ToString(), selectier.ogname)" placeholder="Tier Title" style="background-color: @selectier.color ; color: @GlobalStyleFunctions.GetMostReadableTextColor(selectier.color)">
 				</div>
-				<MudColorPicker Label="Tier Color" @bind-Text="selectier.color" Style="@($"color: {selectier.color};")" Placeholder="Select Color" />
+				<MudColorPicker Label="Tier Color" @bind-Text="selectier.color" Style="@($"color: white;")" Placeholder="Select Color" />
 				<button class="m-2 bg-danger text-light rounded p-1" @onclick="YouSure">Remove</button>
 			</div>
 		</div>

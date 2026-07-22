@@ -25,7 +25,7 @@
 }
 else
 {
-	@if (mobile)@* WOKRS ON MOBILE *@
+	@if (mobile)@* WORKS ON MOBILE *@
 	{
 		@if (false)
 		{
@@ -76,7 +76,7 @@ else
 	{
 		@* WORKS ON DESKTOP *@
 		<a class="clickable draggable" draggable="true" @ondragover="OverHere" @ondragleave="OuttaHere" @onmousedown="(e) => StartDrag(e)" @ondragend="StopDrag">
-			@if (Showcase)
+			@if (Showcase && !dragging)
 			{
 				<MudTooltip class="col-2" Color="Color.Transparent">
 					<ChildContent>
@@ -180,6 +180,8 @@ else
 
 	bool Loading = false;
 
+	bool dragging = false;
+
 	string? _blobUrl;
 
 	protected override async Task OnInitializedAsync()
@@ -259,11 +261,12 @@ else
 					return;
 
 				dragStarted = true;
+				dragging = true;
 
 				Logger.LogInformation("[TierItemComp] DRAGDELAY: Pointer passed threshold, Dragging!");
 
 				// comment to disable drag ghost
-				
+
 				await JSRuntime.InvokeVoidAsync(
 					"dragGhost.create",
 					elementRef,
@@ -282,12 +285,15 @@ else
 			await OnItemSelect.InvokeAsync(item);
 		else
 		{
+			dragging = true;
 			await OnItemDrag.InvokeAsync(item);
 		}
+		StateHasChanged();
 	}
 
 	async Task StopDrag(MouseEventArgs e)
 	{
+		dragging = false;
 		if (NoInteraction) return;
 
 		Logger.LogInformation($"[TierItemComp] Stopped drag!");
