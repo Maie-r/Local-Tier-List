@@ -13,6 +13,27 @@ namespace Local_Tier_List.Data.App
         public string Color { get; set; } = "#a050dc";
         public List<TierList> Tierlists { get; set; } = new List<TierList>();
         public List<TLFolder> Folders { get; set; } = new List<TLFolder>();
+
+        public static List<TLFolder> GetAllSubFolders(TLFolder folder)
+        {
+            var res = new List<TLFolder>();
+            foreach (var f in folder.Folders)
+            {
+                res.Add(f);
+                res.AddRange(GetAllSubFolders(f));
+            }
+            return res;
+        }
+        public static List<TierList> GetAllTierlists(TLFolder folder)
+        {
+            var res = new List<TierList>();
+            res.AddRange(folder.Tierlists);
+            foreach (var f in folder.Folders)
+            {
+                res.AddRange(GetAllTierlists(f));
+            }
+            return res;
+        }
     }
 
     public class TLFolderDTO

@@ -28,7 +28,7 @@
         <ApplicationId>com.maieapps.localtierlist</ApplicationId>
 
         <!-- Versions -->
-        <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+        <ApplicationDisplayVersion>1.1.1</ApplicationDisplayVersion>
         <ApplicationVersion>1</ApplicationVersion>
 
 		<WindowsPackageType Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">None</WindowsPackageType>

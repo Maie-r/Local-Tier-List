@@ -23,7 +23,7 @@
 }
 else
 {
-	@if (lists!.Count <= 0 && IsRoot)
+	@if (TLFolder.GetAllTierlists(Folder).Count <= 0 && IsRoot)
 	{
 		<div class="d-flex flex-column text-center flex-fill justify-content-center mx-auto mx-md-0">
 			<div class="col-11 col-lg-4 mx-0 mx-md-2 d-flex darken-25 p-2" style="border-radius: 20px">
@@ -319,10 +319,14 @@ else
 	{
 		if (CurrentModal == TLListModalType.TLDelete)
 		{
-			lists.Remove(selectedTierlist);
+
+			var b = TierService.TierLists.Count;
+			TierService.TierLists.Remove(selectedTierlist);
+			Folder.Tierlists.Remove(selectedTierlist);
 			await OnDeletedItems.InvokeAsync(new List<TierList>(){ selectedTierlist });
 			await ResetModal();
 			await OnChangesMade.InvokeAsync();
+			Logger.LogInformation($"Deleting tl {b} {TierService.TierLists.Count}");
 		}
 		else if (CurrentModal == TLListModalType.FolderDelete)
 		{
@@ -338,6 +342,7 @@ else
 	{
 		var tl = selectedFolder.Tierlists;
 		Folder.Tierlists.AddRange(tl);
+		Folder.Folders.AddRange(selectedFolder.Folders);
 		Folder.Folders.Remove(selectedFolder);
 		await ResetModal();
 		await OnChangesMade.InvokeAsync();
@@ -353,7 +358,7 @@ else
 		{
 			CurrentModal = type;
 		}
-		
+
 	}
 
 	async Task ResetModal()
@@ -370,7 +375,7 @@ else
 			return Basecolor + "64";
 		else if (Basecolor.Length <= 9)
 		{
-			var currentopacity = Basecolor.Remove(0, 6);
+			var currentopacity = Basecolor.Remove(0, 7);
 			var total = Convert.ToInt32(currentopacity, 16);
 			total /= 5;
 			Basecolor = Basecolor.Remove(7);
@@ -536,19 +541,26 @@ else
 		}
 	}
 
-	async Task OverFolder(List<TLFolder> folders, int i)
+	void OverFolder(List<TLFolder> folders, int i)
 	{
 		OverReturnButton = false;
-		var OverTL = DragDropApi<TierList>.GetOver();
-		if (OverTL != null)
+		try
 		{
-			DragDropApi<TierList>.OuttaHere();
-		}
+			var OverTL = DragDropApi<TierList>.GetOver();
+			if (OverTL != null)
+			{
+				DragDropApi<TierList>.OuttaHere();
+			}
 
-		DragDropApi<TLFolder>.OverHere(folders, i);
+			DragDropApi<TLFolder>.OverHere(folders, i);
+		}
+		catch (Exception e)
+		{
+			Logger.LogInformation(e.Message);
+		}
 	}
 
-	async Task OverReturn()
+	void OverReturn()
 	{
 		DragDropApi<TLFolder>.OuttaHere();
 		DragDropApi<TierList>.OuttaHere();
@@ -557,6 +569,7 @@ else
 
 	async Task StopDrag(string caller)
 	{
+		bool Changed = false;
 		Logger.LogInformation("Stopped drag!!");
 		if (overrideDrag)
 		{
@@ -591,7 +604,7 @@ else
 					{
 						overFolder.Tierlists.Add(dragged);
 						lists.Remove(dragged);
-						await OnChangesMade.InvokeAsync();
+						Changed = true;
 					}
 				}
 				else if (OverReturnButton)
@@ -601,7 +614,7 @@ else
 					{
 						Parent!.Folder.Tierlists.Add(dragged);
 						lists.Remove(dragged);
-						await OnChangesMade.InvokeAsync();
+						Changed = true;
 					}
 					OverReturnButton = false;
 				}
@@ -622,36 +635,45 @@ else
 					dragStarted = false;
 				}
 				var overFolder = DragDropApi<TLFolder>.GetOver();
+				Logger.LogInformation("huh?");
 				if (OverReturnButton)
 				{
 					var dragged = DragDropApi<TLFolder>.GetDragged();
+
 					if (dragged != null)
 					{
 						Parent!.Folder.Folders.Add(dragged);
 						Folder.Folders.Remove(dragged);
-						await OnChangesMade.InvokeAsync();
+						Changed = true;
 					}
 					OverReturnButton = false;
 				}
 				else if (overFolder != null)
 				{
+					Logger.LogInformation("1");
 					var dragged = DragDropApi<TLFolder>.GetDragged();
+
 					if (dragged != null && overFolder != dragged)
 					{
 						overFolder.Folders.Add(dragged);
 						Folder.Folders.Remove(dragged);
-						await OnChangesMade.InvokeAsync();
+						Changed = true;
 					}
+					Logger.LogInformation("2");
 				}
 				else if (DragDropApi<TLFolder>.StopDrag())
 				{
+					Logger.LogInformation("drag stopped?");
 					await OnChangesMade.InvokeAsync();
 					return;
 				}
+				Logger.LogInformation("3");
 			}
 		}
 		
+		Logger.LogInformation("drag cancelled");
 		DragDropApi<TierList>.StopDrag(DragDropBehaviour.Cancel);
 		DragDropApi<TLFolder>.StopDrag(DragDropBehaviour.Cancel);
+		if (Changed) await OnChangesMade.InvokeAsync();
 	}
 }

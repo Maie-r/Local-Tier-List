@@ -116,7 +116,7 @@ else
 						TierService.TierLists.Add(tl);
 						CurrentFolder.Tierlists.Add(tl);
 					}
-					if (imported.Count == 1)
+					if (imported.Count == 1 || ImportReplace)
 						await OnSelected.InvokeAsync(imported[0]);
 					//lists = TierService.TierLists;
 					importErr = "";
